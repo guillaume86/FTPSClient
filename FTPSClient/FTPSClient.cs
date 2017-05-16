@@ -737,7 +737,7 @@ namespace AlexPilotti.FTPS.Client
             {
                 using (FileStream fs = new FileStream(localFileName, FileMode.Create, FileAccess.Write, FileShare.None))
                 {                    
-                    byte[] buf = new byte[1024];
+                    byte[] buf = new byte[8192];
                     int n = 0;
                     do
                     {
@@ -1454,7 +1454,7 @@ namespace AlexPilotti.FTPS.Client
 
             using (FileStream fs = File.OpenRead(localFileName))
             {
-                byte[] buf = new byte[1024];
+                byte[] buf = new byte[8192];
                 int n = 0;
                 do
                 {
@@ -1541,7 +1541,7 @@ namespace AlexPilotti.FTPS.Client
 
                 StringBuilder data = new StringBuilder();
 
-                byte[] buf = new byte[1024];
+                byte[] buf = new byte[8192];
                 int n = 0;
                 do
                 {
@@ -1626,6 +1626,9 @@ namespace AlexPilotti.FTPS.Client
 
             // Enter passive mode                
             dataClient = new TcpClient(addr.ToString(), dataEndPoint.Port);
+
+            dataClient.SendBufferSize = 40 * 8192;
+            dataClient.ReceiveBufferSize = 640 * 8192;
 
             SetDataClientTimeout();
         }
