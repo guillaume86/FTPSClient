@@ -1685,6 +1685,7 @@ namespace AlexPilotti.FTPS.Client
         private void SwitchCtrlToClearMode()
         {
             ctrlSslStream.Close();
+            ctrlSslStream.Dispose();
             ctrlSslStream = null;
 
             SetupCtrlStreamReaderAndWriter(ctrlClient.GetStream());
@@ -1885,16 +1886,20 @@ namespace AlexPilotti.FTPS.Client
                 if (ctrlSslStream != null)
                 {
                     ctrlSslStream.Close();
+                    ctrlSslStream.Dispose();
                     ctrlSslStream = null;
                 }
 
                 ctrlSr.Close();
+                ctrlSr.Dispose();
                 ctrlSr = null;
 
                 ctrlSw.Close();
+                ctrlSw.Dispose();
                 ctrlSw = null;
 
                 ctrlClient.Close();
+                ctrlClient.Dispose();
                 ctrlClient = null;
 
                 waitingCompletionReply = false;
@@ -1908,10 +1913,12 @@ namespace AlexPilotti.FTPS.Client
                 if (dataSslStream != null)
                 {
                     dataSslStream.Close();
+                    dataSslStream.Dispose();
                     dataSslStream = null;
                 }
 
                 dataClient.Close();
+                dataClient.Dispose();
                 dataClient = null;
             }
 
