@@ -16,23 +16,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Net;
-using System.Net.Security;
-using System.Net.Sockets;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.RegularExpressions;
-using AlexPilotti.FTPS.Common;
-using System.Threading;
-using System.Runtime.CompilerServices;
-
 namespace AlexPilotti.FTPS.Client
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Net;
+    using System.Net.Security;
+    using System.Net.Sockets;
+    using System.Runtime.CompilerServices;
+    using System.Security.Authentication;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using Common;
+
     /// <summary>
     /// The SSL/TLS support requested or required for a connection.
     /// </summary>
@@ -109,35 +109,65 @@ namespace AlexPilotti.FTPS.Client
     /// <summary>
     /// Possible actions occurring during a file transfer.
     /// </summary>
-    public enum ETransferActions { LocalDirectoryCreated, RemoteDirectoryCreated, 
-                                   FileUploaded, FileUploadingStatus, 
-                                   FileDownloaded, FileDownloadingStatus }
-
-    /// <summary>
-    /// File pattern style used in <see cref="FTPSClient.GetFiles"/> and  <see cref="FTPSClient.PutFiles"/>.
-    /// </summary>
-    public enum EPatternStyle
-    { 
+    public enum ETransferActions
+    {
         /// <summary>
-        /// Interpret as is.
+        /// 
         /// </summary>
-        Verbatim, 
+        LocalDirectoryCreated, 
         /// <summary>
-        /// Interpret as wildcard, where <c>*</c> means 0 or more chars having any value and <c>?</c> means one char having any value. 
+        /// 
         /// </summary>
-        Wildcard, 
+        RemoteDirectoryCreated,
         /// <summary>
-        /// Interpret as a regular expression.
+        /// 
         /// </summary>
-        Regex 
+        FileUploaded,
+        /// <summary>
+        /// 
+        /// </summary>
+        FileUploadingStatus,
+        /// <summary>
+        /// 
+        /// </summary>
+        FileDownloaded, 
+        /// <summary>
+        /// 
+        /// </summary>
+        FileDownloadingStatus
     }
 
     /// <summary>
-    /// Trasfer mode used in connections
+    /// File pattern style used in <see cref="FTPSClient.GetFiles(string,bool)"/> and  <see cref="FTPSClient.PutFiles(string)"/>.
+    /// </summary>
+    public enum EPatternStyle
+    {
+        /// <summary>
+        /// Interpret as is.
+        /// </summary>
+        Verbatim,
+        /// <summary>
+        /// Interpret as wildcard, where <c>*</c> means 0 or more chars having any value and <c>?</c> means one char having any value. 
+        /// </summary>
+        Wildcard,
+        /// <summary>
+        /// Interpret as a regular expression.
+        /// </summary>
+        Regex
+    }
+
+    /// <summary>
+    /// Transfer mode used in connections
     /// </summary>
     public enum EDataConnectionMode
     {
+        /// <summary>
+        /// 
+        /// </summary>
         Active,
+        /// <summary>
+        /// 
+        /// </summary>
         Passive
     }
 
@@ -151,12 +181,15 @@ namespace AlexPilotti.FTPS.Client
     /// <param name="fileTransmittedBytes"></param>
     /// <param name="fileTransferSize"><c>null</c> if not available (e.g. the server does not support the SIZE command).</param>
     /// <param name="cancel"></param>
-    public delegate void FileTransferCallback(FTPSClient sender, ETransferActions action, 
+    public delegate void FileTransferCallback(FTPSClient sender, ETransferActions action,
                                               string localObjectName, string remoteObjectName,
-                                              ulong fileTransmittedBytes, ulong? fileTransferSize, 
+                                              ulong fileTransmittedBytes, ulong? fileTransferSize,
                                               ref bool cancel);
 
+    /// <inheritdoc />
     public delegate void LogCommandEventHandler(object sender, LogCommandEventArgs args);
+
+    /// <inheritdoc />
     public delegate void LogServerReplyEventHandler(object sender, LogServerReplyEventArgs args);
 
 
@@ -176,208 +209,155 @@ namespace AlexPilotti.FTPS.Client
     {
         #region Private Enums
 
-        enum EProtCode { C, S, E, P }
-        enum EAuthMechanism { TLS }
-        enum ERepType { A, E, I, L }
+        private enum EProtCode { C, S, E, P }
+
+        private enum EAuthMechanism { TLS }
+
+        private enum ERepType { A, E, I, L }
 
         #endregion
 
         #region Private Fields
 
-        TcpClient ctrlClient = null;
-        StreamReader ctrlSr;
-        StreamWriter ctrlSw;
-        SslStream ctrlSslStream;
+        private TcpClient ctrlClient;
+        private StreamReader ctrlSr;
+        private StreamWriter ctrlSw;
+        private SslStream ctrlSslStream;
 
-        TcpClient dataClient = null;
-        SslStream dataSslStream;
+        private TcpClient dataClient;
+        private SslStream dataSslStream;
 
-        EDataConnectionMode dataConnectionMode = EDataConnectionMode.Passive;
+        private EDataConnectionMode dataConnectionMode = EDataConnectionMode.Passive;
 
         /// <summary>
         /// <c>true</c> to ignore the address returned by PASV
         /// </summary>
-        bool useCtrlEndPointAddressForData = true;
+        private bool useCtrlEndPointAddressForData = true;
 
-        bool waitingCompletionReply = false;
+        private bool waitingCompletionReply;
 
-        string hostname;
+        private string hostname;
 
-        const string anonUsername = "anonymous";
-        const string anonPassword = "anonymous@FTPSClient.org"; // dummy password
+        private const string anonUsername = "anonymous";
+        private const string anonPassword = "anonymosssus@FTPSClient.org"; // dummy password
 
-        const string clntName = "AlexFTPS";
+        private const string clntName = "AlexFTPS";
 
-        const ESSLSupportMode defaultSSLSupportMode = ESSLSupportMode.CredentialsRequired | ESSLSupportMode.DataChannelRequested;
+        private const ESSLSupportMode defaultSSLSupportMode = ESSLSupportMode.CredentialsRequired | ESSLSupportMode.DataChannelRequested;
 
-        ESSLSupportMode sslSupportRequestedMode;
-        ESSLSupportMode sslSupportCurrentMode;
+        private ESSLSupportMode sslSupportRequestedMode;
+        private ESSLSupportMode sslSupportCurrentMode;
 
-        X509Certificate sslServerCert;
-        X509Certificate sslClientCert;
+        private X509Certificate sslServerCert;
+        private X509Certificate sslClientCert;
 
-        SslInfo sslInfo;
+        private SslInfo sslInfo;
 
         /// <summary>
         /// 0 means no check
         /// </summary>
-        int sslMinKeyExchangeAlgStrength = 0;
-        int sslMinCipherAlgStrength = 0;
-        int sslMinHashAlgStrength = 0;
+        private int sslMinKeyExchangeAlgStrength;
 
-        bool sslCheckCertRevocation = true;
+        private int sslMinCipherAlgStrength;
+        private int sslMinHashAlgStrength;
 
-        RemoteCertificateValidationCallback userValidateServerCertificate;
+        private RemoteCertificateValidationCallback userValidateServerCertificate;
 
-        int timeout = 120000; //ms
+        private int timeout = 120000; //ms
 
-        IList<string> features = null;
+        private IList<string> features;
 
-        ETransferMode transferMode = ETransferMode.ASCII;
-        ETextEncoding textEncoding = ETextEncoding.ASCII;
+        private ETransferMode transferMode = ETransferMode.ASCII;
+        private ETextEncoding textEncoding = ETextEncoding.ASCII;
 
-        string welcomeMessage = null;
+        private string welcomeMessage;
 
-        string bannerMessage = null;
+        private string bannerMessage;
 
-        Stack<string> currDirStack = new Stack<string>();
+        private Stack<string> currDirStack = new Stack<string>();
 
-        TcpListener activeDataConnListener;
+        private TcpListener activeDataConnListener;
 
-        Thread keepAliveThread = null;
-        volatile bool keepAlive = true;
-        int keepAliveTimeout = 20000; // ms
+        private Thread keepAliveThread;
+        private volatile bool keepAlive = true;
+        private int keepAliveTimeout = 20000; // ms
 
-#endregion
+        #endregion
 
         #region Public Properties
 
         /// <summary>
         /// The requested SSL/TLS support level.
         /// </summary>
-        public ESSLSupportMode SslSupportRequestedMode
-        {
-            get { return sslSupportRequestedMode; }
-        }
+        public ESSLSupportMode SslSupportRequestedMode => sslSupportRequestedMode;
 
         /// <summary>
         /// The current SSL/TLS support level.
         /// </summary>
-        public ESSLSupportMode SslSupportCurrentMode
-        {
-            get { return sslSupportCurrentMode; }
-        }
+        public ESSLSupportMode SslSupportCurrentMode => sslSupportCurrentMode;
 
         /// <summary>
         /// The current text encoding
         /// </summary>
-        public ETextEncoding TextEncoding
-        {
-            get
-            {
-                return textEncoding;
-            }
-        }
+        public ETextEncoding TextEncoding => textEncoding;
 
         /// <summary>
         /// The current transfer mode
         /// </summary>
-        public ETransferMode TransferMode
-        {
-            get
-            {
-                return transferMode;
-            }
-        }
+        public ETransferMode TransferMode => transferMode;
 
         /// <summary>
         /// The welcome message returned by the server during connection.
         /// </summary>
-        public string WelcomeMessage
-        {
-            get { return welcomeMessage; }
-        }
+        public string WelcomeMessage => welcomeMessage;
 
         /// <summary>
         /// The banner message returned by the server during connection.
         /// </summary>
-        public string BannerMessage
-        {
-            get { return bannerMessage; }
-        }
+        public string BannerMessage => bannerMessage;
 
         /// <summary>
         /// The server X.509 certificate used by the current connection
         /// </summary>
-        /// <values><c>null</c> if the connection is not encrypted</value>
-        public X509Certificate RemoteCertificate
-        {
-            get
-            {
-                return ctrlSslStream != null ? ctrlSslStream.RemoteCertificate : null;
-            }
-        }
+        /// <value><c>null</c> if the connection is not encrypted</value>
+        public X509Certificate RemoteCertificate => ctrlSslStream != null ? ctrlSslStream.RemoteCertificate : null;
 
         /// <summary>
         /// The key exchange, hash and cipher algorithms used by the SSL/TLS connection or <c>null</c> if encryption is not used.
         /// </summary>
-        public SslInfo SslInfo
-        {
-            get
-            {
-                return sslInfo;
-            }
-        }
+        public SslInfo SslInfo => sslInfo;
 
         /// <summary>
         /// The client X.509 certificate used by the current connection
         /// </summary>
         /// <value><c>null</c> if the connection is not using a client certificate</value>
-        public X509Certificate LocalCertificate
-        {
-            get
-            {
-                return ctrlSslStream != null ? ctrlSslStream.LocalCertificate : null;
-            }
-        }
+        public X509Certificate LocalCertificate => ctrlSslStream != null ? ctrlSslStream.LocalCertificate : null;
 
         /// <summary>
         /// Returns true if the keep alive thread has been started
         /// </summary>
-        public bool KeepAliveStarted 
-        { 
-            get 
-            { 
-                return keepAliveThread != null; 
-            } 
-        }
+        public bool KeepAliveStarted => keepAliveThread != null;
 
         #endregion
 
         #region private Properties
 
-        private bool IsControlChannelEncrypted
-        {
-            get
-            {
-                return ctrlSslStream != null;
-            }
-        }
+        private bool IsControlChannelEncrypted => ctrlSslStream != null;
 
-        private bool IsDataChannelOpen
-        {
-            get
-            {
-                return (dataClient != null);
-            }
-        }
+        private bool IsDataChannelOpen => dataClient != null;
 
         #endregion
 
         #region Public Events
 
+        /// <summary>
+        /// 
+        /// </summary>
         public event LogCommandEventHandler LogCommand;
-        public event LogServerReplyEventHandler LogServerReply; 
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LogServerReplyEventHandler LogServerReply;
 
         #endregion
 
@@ -386,34 +366,56 @@ namespace AlexPilotti.FTPS.Client
         /// <summary>
         /// Anonymous authentication
         /// </summary>
-        /// <param name="hostname"></param>
+        /// <param name="host"></param>
         /// <returns>The text of the \"welcome message\" sent by the server.</returns>
-        public string Connect(string hostname)
+        public string Connect(string host)
         {
-            return Connect(hostname, defaultSSLSupportMode);
+            return Connect(host, defaultSSLSupportMode);
         }
 
         /// <summary>
         /// Anonymous authentication
         /// </summary>
-        /// <param name="hostname"></param>
+        /// <param name="host"></param>
+        /// <param name="sslSupportMode"></param>
         /// <returns>The text of the \"welcome message\" sent by the server.</returns>
-        public string Connect(string hostname, ESSLSupportMode sslSupportMode)
+        public string Connect(string host, ESSLSupportMode sslSupportMode)
         {
-            return Connect(hostname, null, sslSupportMode);
+            return Connect(host, null, sslSupportMode);
         }
 
-        public string Connect(string hostname, NetworkCredential credential)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="credential"></param>
+        /// <returns></returns>
+        public string Connect(string host, NetworkCredential credential)
         {
-            return Connect(hostname, credential, defaultSSLSupportMode);
+            return Connect(host, credential, defaultSSLSupportMode);
         }
 
-        public string Connect(string hostname, NetworkCredential credential, ESSLSupportMode sslSupportMode)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="credential"></param>
+        /// <param name="sslSupportMode"></param>
+        /// <returns></returns>
+        public string Connect(string host, NetworkCredential credential, ESSLSupportMode sslSupportMode)
         {
-            return Connect(hostname, credential, sslSupportMode, null);
+            return Connect(host, credential, sslSupportMode, null);
         }
 
-        public string Connect(string hostname, NetworkCredential credential, ESSLSupportMode sslSupportMode, 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="credential"></param>
+        /// <param name="sslSupportMode"></param>
+        /// <param name="userValidateServerCertificate"></param>
+        /// <returns></returns>
+        public string Connect(string host, NetworkCredential credential, ESSLSupportMode sslSupportMode,
                             RemoteCertificateValidationCallback userValidateServerCertificate)
         {
             // Default implicit FTPS port is 990, default standard and explicit FTPS port is 21
@@ -426,7 +428,7 @@ namespace AlexPilotti.FTPS.Client
         /// The default representation tipe is set to Binary.
         /// The text encoding is set to UTF8, if supported by the server via the FEAT command.
         /// </summary>
-        /// <param name="hostname"></param>
+        /// <param name="host"></param>
         /// <param name="port"></param>
         /// <param name="credential"></param>
         /// <param name="sslSupportMode"></param>
@@ -437,12 +439,12 @@ namespace AlexPilotti.FTPS.Client
         /// <param name="sslMinHashAlgStrength"></param>
         /// <param name="timeout">Connection timeout in ms. <c>null</c> can be specifiad to keep the default value of 120s.</param>
         /// <returns>The text of the \"welcome message\" sent by the server.</returns>
-        public string Connect(string hostname, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode, 
-                            RemoteCertificateValidationCallback userValidateServerCertificate, X509Certificate x509ClientCert, 
-                            int sslMinKeyExchangeAlgStrength, int sslMinCipherAlgStrength, int sslMinHashAlgStrength, 
+        public string Connect(string host, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode,
+                            RemoteCertificateValidationCallback userValidateServerCertificate, X509Certificate x509ClientCert,
+                            int sslMinKeyExchangeAlgStrength, int sslMinCipherAlgStrength, int sslMinHashAlgStrength,
                             int? timeout)
         {
-            return Connect(hostname, port, credential, sslSupportMode, userValidateServerCertificate, x509ClientCert,
+            return Connect(host, port, credential, sslSupportMode, userValidateServerCertificate, x509ClientCert,
                            sslMinKeyExchangeAlgStrength, sslMinCipherAlgStrength, sslMinHashAlgStrength, timeout, true);
         }
 
@@ -451,7 +453,7 @@ namespace AlexPilotti.FTPS.Client
         /// The default representation tipe is set to Binary.
         /// The text encoding is set to UTF8, if supported by the server via the FEAT command.
         /// </summary>
-        /// <param name="hostname"></param>
+        /// <param name="host"></param>
         /// <param name="port"></param>
         /// <param name="credential"></param>
         /// <param name="sslSupportMode"></param>
@@ -463,12 +465,12 @@ namespace AlexPilotti.FTPS.Client
         /// <param name="timeout">Connection timeout in ms. <c>null</c> can be specifiad to keep the default value of 120s.</param>
         /// <param name="useCtrlEndPointAddressForData"><c>true</c> to use the control channel remote address for data connections instead of the address returned by PASV</param>
         /// <returns>The text of the \"welcome message\" sent by the server.</returns>
-        public string Connect(string hostname, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode,
+        public string Connect(string host, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode,
                             RemoteCertificateValidationCallback userValidateServerCertificate, X509Certificate x509ClientCert,
                             int sslMinKeyExchangeAlgStrength, int sslMinCipherAlgStrength, int sslMinHashAlgStrength,
                             int? timeout, bool useCtrlEndPointAddressForData)
         {
-            return Connect(hostname, port, credential, sslSupportMode, userValidateServerCertificate, x509ClientCert,
+            return Connect(host, port, credential, sslSupportMode, userValidateServerCertificate, x509ClientCert,
                            sslMinKeyExchangeAlgStrength, sslMinCipherAlgStrength, sslMinHashAlgStrength, timeout, true, EDataConnectionMode.Passive);
         }
 
@@ -478,7 +480,7 @@ namespace AlexPilotti.FTPS.Client
         /// The default representation tipe is set to Binary.
         /// The text encoding is set to UTF8, if supported by the server via the FEAT command.
         /// </summary>
-        /// <param name="hostname"></param>
+        /// <param name="host"></param>
         /// <param name="port"></param>
         /// <param name="credential"></param>
         /// <param name="sslSupportMode"></param>
@@ -491,9 +493,9 @@ namespace AlexPilotti.FTPS.Client
         /// <param name="useCtrlEndPointAddressForData"><c>true</c> to use the control channel remote address for data connections instead of the address returned by PASV</param>
         /// <param name="dataConnectionMode">Active or Passive data connection mode</param>
         /// <returns>The text of the \"welcome message\" sent by the server.</returns>
-        public string Connect(string hostname, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode, 
-                            RemoteCertificateValidationCallback userValidateServerCertificate, X509Certificate x509ClientCert, 
-                            int sslMinKeyExchangeAlgStrength, int sslMinCipherAlgStrength, int sslMinHashAlgStrength, 
+        public string Connect(string host, int port, NetworkCredential credential, ESSLSupportMode sslSupportMode,
+                            RemoteCertificateValidationCallback userValidateServerCertificate, X509Certificate x509ClientCert,
+                            int sslMinKeyExchangeAlgStrength, int sslMinCipherAlgStrength, int sslMinHashAlgStrength,
                             int? timeout, bool useCtrlEndPointAddressForData, EDataConnectionMode dataConnectionMode)
         {
             Close();
@@ -505,7 +507,7 @@ namespace AlexPilotti.FTPS.Client
             if (timeout != null)
                 this.timeout = timeout.Value;
 
-            this.sslClientCert = x509ClientCert;
+            sslClientCert = x509ClientCert;
 
             this.userValidateServerCertificate = userValidateServerCertificate;
 
@@ -513,8 +515,8 @@ namespace AlexPilotti.FTPS.Client
             this.sslMinCipherAlgStrength = sslMinCipherAlgStrength;
             this.sslMinHashAlgStrength = sslMinHashAlgStrength;
 
-            this.sslSupportRequestedMode = sslSupportMode;
-            this.sslSupportCurrentMode = sslSupportMode;
+            sslSupportRequestedMode = sslSupportMode;
+            sslSupportCurrentMode = sslSupportMode;
 
             this.useCtrlEndPointAddressForData = useCtrlEndPointAddressForData;
 
@@ -528,7 +530,7 @@ namespace AlexPilotti.FTPS.Client
             textEncoding = ETextEncoding.ASCII;
 
             bannerMessage = null;
-            welcomeMessage = null;            
+            welcomeMessage = null;
 
             currDirStack.Clear();
 
@@ -536,7 +538,7 @@ namespace AlexPilotti.FTPS.Client
             SetupCtrlConnection(hostname, port, Encoding.ASCII);
 
             // Used later for SSL/TLS auth
-            this.hostname = hostname;
+            this.hostname = host;
 
             // Implicit SSL/TLS
             bool isImplicitSsl = (sslSupportMode & ESSLSupportMode.Implicit) == ESSLSupportMode.Implicit;
@@ -552,13 +554,13 @@ namespace AlexPilotti.FTPS.Client
 
             // Login. Note that a password might not be required
             // TODO: check if the welcomeMessage is returned by the USER command in case the PASS command is not required.  
-            if(UserCmd(credential.UserName))
+            if (UserCmd(credential.UserName))
                 welcomeMessage = PassCmd(credential.Password);
 
             GetFeaturesFromServer();
 
             if (IsControlChannelEncrypted)
-                if(!isImplicitSsl)
+                if (!isImplicitSsl)
                 {
                     SslDataChannelCheckExplicitEncryptionRequest();
 
@@ -615,7 +617,7 @@ namespace AlexPilotti.FTPS.Client
             if (keepAliveThread != null)
                 throw new FTPException("KeepAlive already started");
 
-            keepAliveThread = new Thread(new ThreadStart(KeepAliveThreadFunc));
+            keepAliveThread = new Thread(KeepAliveThreadFunc);
             keepAliveThread.Start();
         }
 
@@ -640,12 +642,12 @@ namespace AlexPilotti.FTPS.Client
             {
                 // FileZilla server requires this
                 if (CheckFeature("AUTH SSL") ||
-                    CheckFeature("AUTH TLS") || 
-                    (CheckFeature("PBSZ") && CheckFeature("PROT")))
+                    CheckFeature("AUTH TLS") ||
+                    CheckFeature("PBSZ") && CheckFeature("PROT"))
                 {
                     PbszCmd(0);
                     ProtCmd(EProtCode.P);
-                }                    
+                }
             }
             catch (Exception)
             {
@@ -729,14 +731,13 @@ namespace AlexPilotti.FTPS.Client
                     // Give a more detailed description, insteand of, e.g.: "Could not get file size".
                     if (ex.ErrorCode == 550)
                         throw new FTPException("Could not get the requested remote file", ex);
-                    else
-                        throw ex;
+                    throw ex;
                 }
 
             using (Stream s = GetFile(remoteFileName))
             {
                 using (FileStream fs = new FileStream(localFileName, FileMode.Create, FileAccess.Write, FileShare.None))
-                {                    
+                {
                     byte[] buf = new byte[8192];
                     int n = 0;
                     do
@@ -1001,6 +1002,11 @@ namespace AlexPilotti.FTPS.Client
             PutFiles(localDirectoryName, null, null, EPatternStyle.Verbatim, false, null);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteFileName"></param>
+        /// <returns></returns>
         public FTPStream AppendFile(string remoteFileName)
         {
             SetupDataConnection();
@@ -1023,12 +1029,18 @@ namespace AlexPilotti.FTPS.Client
         /// </summary>
         /// <param name="localFileName"></param>
         /// <param name="remoteFileName"></param>
+        /// <param name="transferCallback"></param>
         public ulong AppendFile(string localFileName, string remoteFileName, FileTransferCallback transferCallback)
         {
             using (Stream s = AppendFile(remoteFileName))
                 return SendFile(localFileName, remoteFileName, s, transferCallback);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteFileName"></param>
+        /// <returns></returns>
         public FTPStream PutUniqueFile(out string remoteFileName)
         {
             SetupDataConnection();
@@ -1061,7 +1073,7 @@ namespace AlexPilotti.FTPS.Client
         /// <summary>
         /// Deletes the given remote file.
         /// </summary>
-        /// <param name="remoteDirName"></param>
+        /// <param name="remoteFileName"></param>
         public void DeleteFile(string remoteFileName)
         {
             DeleCmd(remoteFileName);
@@ -1070,7 +1082,8 @@ namespace AlexPilotti.FTPS.Client
         /// <summary>
         /// Renames the given remote file.
         /// </summary>
-        /// <param name="remoteDirName"></param>
+        /// <param name="remoteFileNameFrom"></param>
+        /// <param name="remoteFileNameTo"></param>
         public void RenameFile(string remoteFileNameFrom, string remoteFileNameTo)
         {
             RnfrCmd(remoteFileNameFrom);
@@ -1103,6 +1116,10 @@ namespace AlexPilotti.FTPS.Client
             CdupCmd();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public IList<string> GetShortDirectoryList()
         {
             return GetShortDirectoryList(null);
@@ -1121,9 +1138,13 @@ namespace AlexPilotti.FTPS.Client
             string listData = GetDataString();
             GetReply();
 
-            return new List<string>(listData.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
+            return new List<string>(listData.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public IList<DirectoryListItem> GetDirectoryList()
         {
             return GetDirectoryList(null);
@@ -1144,6 +1165,10 @@ namespace AlexPilotti.FTPS.Client
             return DirectoryListParser.GetDirectoryList(listData);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public string GetDirectoryListUnparsed()
         {
             return GetDirectoryListUnparsed(null);
@@ -1152,7 +1177,7 @@ namespace AlexPilotti.FTPS.Client
         /// <summary>
         /// returns the given directory list data as returned from the server, without parsing its contents.
         /// </summary>
-        /// <param name="dirName"></param>
+        /// <param name="remoteDirName"></param>
         /// <returns></returns>
         public string GetDirectoryListUnparsed(string remoteDirName)
         {
@@ -1173,11 +1198,15 @@ namespace AlexPilotti.FTPS.Client
             return listData;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public string GetCurrentDirectory()
         {
             return PwdCmd();
         }
-               
+
         /// <summary>
         /// Pushes the current remote directory on a stack, in order to easily restore it later calling <see cref="PopCurrentDirectory"/>.
         /// </summary>
@@ -1230,7 +1259,7 @@ namespace AlexPilotti.FTPS.Client
         }
 
         /// <summary>
-        /// Set the language used by the server during the current connection. Please check the features returned by <see cref="GetFeatues"/> for a list of 
+        /// Set the language used by the server during the current connection. Please check the features returned by <see cref="GetFeatures"/> for a list of 
         /// available languages supported by the server.
         /// </summary>
         /// <param name="ietfLanguageTag">RFC 1766 language tag.</param>
@@ -1276,6 +1305,7 @@ namespace AlexPilotti.FTPS.Client
 
         #region IDisposable Members
 
+        /// <inheritdoc />
         public void Dispose()
         {
             Close();
@@ -1293,7 +1323,7 @@ namespace AlexPilotti.FTPS.Client
         /// <param name="sslStream"></param>
         private void SetSslInfo(SslStream sslStream)
         {
-            sslInfo = new SslInfo()
+            sslInfo = new SslInfo
             {
                 SslProtocol = sslStream.SslProtocol,
                 CipherAlgorithm = sslStream.CipherAlgorithm,
@@ -1431,7 +1461,7 @@ namespace AlexPilotti.FTPS.Client
             return fileRegexPattern;
         }
 
-        private void CallTransferCallback(FileTransferCallback transferCallback, ETransferActions transferAction, 
+        private void CallTransferCallback(FileTransferCallback transferCallback, ETransferActions transferAction,
                                           string localObjectName, string remoteObjectName,
                                           ulong fileTransmittedBytes, ulong? fileTransferSize)
         {
@@ -1450,7 +1480,7 @@ namespace AlexPilotti.FTPS.Client
 
             ulong? fileTransferSize = null;
             if (transferCallback != null)
-                fileTransferSize = (ulong)(new FileInfo(localFileName).Length);
+                fileTransferSize = (ulong)new FileInfo(localFileName).Length;
 
             using (FileStream fs = File.OpenRead(localFileName))
             {
@@ -1496,7 +1526,7 @@ namespace AlexPilotti.FTPS.Client
             {
                 if (ex.ErrorCode == 550)
                 {
-                    MakeDir(remoteDirectoryName);                    
+                    MakeDir(remoteDirectoryName);
                     CallTransferCallback(transferCallback, ETransferActions.RemoteDirectoryCreated, null, remoteDirectoryName, 0, null);
                 }
                 else
@@ -1507,18 +1537,19 @@ namespace AlexPilotti.FTPS.Client
         private FTPStream EndStreamCommand(FTPStream.EAllowedOperation allowedOp)
         {
             return new FTPStream(GetDataStream(), allowedOp,
-                                 delegate() { 
-                                              CloseDataConnection(); 
-                                              if (waitingCompletionReply) 
-                                                  GetReply(); 
-                                            });
+                                 delegate
+                                 {
+                                     CloseDataConnection();
+                                     if (waitingCompletionReply)
+                                         GetReply();
+                                 });
         }
 
         private Stream GetDataStream()
         {
             Stream s = null;
 
-            if(dataConnectionMode == EDataConnectionMode.Active)
+            if (dataConnectionMode == EDataConnectionMode.Active)
                 SetupActiveDataConnectionStep2();
 
             if ((sslSupportCurrentMode & ESSLSupportMode.DataChannelRequested) == ESSLSupportMode.DataChannelRequested)
@@ -1555,7 +1586,7 @@ namespace AlexPilotti.FTPS.Client
             finally
             {
                 CloseDataConnection();
-            }            
+            }
         }
 
         private void SetupCtrlConnection(string hostname, int port, Encoding textEncoding)
@@ -1568,7 +1599,7 @@ namespace AlexPilotti.FTPS.Client
             s.ReadTimeout = timeout;
             s.WriteTimeout = timeout;
 
-            SetupCtrlStreamReaderAndWriter(s);            
+            SetupCtrlStreamReaderAndWriter(s);
         }
 
         private void SetupCtrlStreamReaderAndWriter(Stream s)
@@ -1652,7 +1683,7 @@ namespace AlexPilotti.FTPS.Client
         private SslStream CreateSSlStream(Stream s, bool leaveInnerStreamOpen)
         {
             SslStream sslStream = new SslStream(s, leaveInnerStreamOpen,
-                new RemoteCertificateValidationCallback(ValidateServerCertificate),
+                ValidateServerCertificate,
                 null //new LocalCertificateSelectionCallback(ValidateClientCertificate)
                 );
 
@@ -1675,13 +1706,13 @@ namespace AlexPilotti.FTPS.Client
         {
             // Check algorithms length
             if (sslMinKeyExchangeAlgStrength > 0 && sslStream.KeyExchangeStrength < sslMinKeyExchangeAlgStrength)
-                throw new FTPSslException("The SSL/TSL key exchange algorithm strength does not fulfill the requirements: " + sslStream.KeyExchangeStrength.ToString());
+                throw new FTPSslException("The SSL/TSL key exchange algorithm strength does not fulfill the requirements: " + sslStream.KeyExchangeStrength);
 
             if (sslMinCipherAlgStrength > 0 && sslStream.CipherStrength < sslMinCipherAlgStrength)
-                throw new FTPSslException("The SSL/TSL cipher algorithm strength does not fulfill the requirements: " + sslStream.CipherStrength.ToString());
+                throw new FTPSslException("The SSL/TSL cipher algorithm strength does not fulfill the requirements: " + sslStream.CipherStrength);
 
             if (sslMinHashAlgStrength > 0 && sslStream.HashStrength < sslMinHashAlgStrength)
-                throw new FTPSslException("The SSL/TSL hash algorithm strength does not fulfill the requirements: " + sslStream.HashStrength.ToString());
+                throw new FTPSslException("The SSL/TSL hash algorithm strength does not fulfill the requirements: " + sslStream.HashStrength);
 
         }
 
@@ -1699,15 +1730,15 @@ namespace AlexPilotti.FTPS.Client
             bool certOk = true;
 
             // Validate only the first time or if the certificate changes
-            if (this.sslServerCert == null || !sslServerCert.Equals(certificate))
+            if (sslServerCert == null || !sslServerCert.Equals(certificate))
             {
                 if (userValidateServerCertificate != null)
                     certOk = userValidateServerCertificate(this, certificate, chain, sslPolicyErrors);
                 else if (sslPolicyErrors != SslPolicyErrors.None)
                     certOk = false;
-               
-                if(certOk)
-                    this.sslServerCert = new X509Certificate(certificate.Export(X509ContentType.Cert));
+
+                if (certOk)
+                    sslServerCert = new X509Certificate(certificate.Export(X509ContentType.Cert));
             }
 
             return certOk;
@@ -1755,7 +1786,7 @@ namespace AlexPilotti.FTPS.Client
         private IPEndPoint ParseEpsvReply(FTPReply reply)
         {
             string[] parts = reply.Message.Split('|');
-            if(parts.Length != 5)
+            if (parts.Length != 5)
                 throw new FTPProtocolException(reply);
 
             int port = int.Parse(parts[3]);
@@ -1831,7 +1862,7 @@ namespace AlexPilotti.FTPS.Client
                     {
                         int code = int.Parse(m.Groups[1].Value);
                         string messageLine = m.Groups[3].Value;
-                        replyDone = (m.Groups[2].Value == " ");
+                        replyDone = m.Groups[2].Value == " ";
 
                         if (reply.Code == 0)
                         {
@@ -1856,7 +1887,7 @@ namespace AlexPilotti.FTPS.Client
                 }
                 while (!replyDone);
 
-                waitingCompletionReply = (reply.Code < 200);
+                waitingCompletionReply = reply.Code < 200;
 
                 if (LogServerReply != null)
                     LogServerReply(this, new LogServerReplyEventArgs(reply));
@@ -1989,7 +2020,7 @@ namespace AlexPilotti.FTPS.Client
 
         private void TypeCmd(ERepType repType, string param2)
         {
-            HandleCmd("TYPE " + repType.ToString() + (param2 != null ? (" " + param2) : ""));
+            HandleCmd("TYPE " + repType + (param2 != null ? " " + param2 : ""));
         }
 
         private string PwdCmd()
@@ -2053,7 +2084,7 @@ namespace AlexPilotti.FTPS.Client
             if (dataConnectionMode == EDataConnectionMode.Active)
                 PortCmd();
             else
-                switch(GetCtrlConnAddressFamily())
+                switch (GetCtrlConnAddressFamily())
                 {
                     case AddressFamily.InterNetwork:
                         PasvCmd();
@@ -2066,12 +2097,12 @@ namespace AlexPilotti.FTPS.Client
 
         private void ListCmd(string dirName)
         {
-            HandleCmd("LIST" + (dirName != null ? (" " + dirName) : ""));
+            HandleCmd("LIST" + (dirName != null ? " " + dirName : ""));
         }
 
         private void NlstCmd(string dirName)
         {
-            HandleCmd("NLST" + (dirName != null ? (" " + dirName) : ""));
+            HandleCmd("NLST" + (dirName != null ? " " + dirName : ""));
         }
 
         private void RnfrCmd(string fileOldName)
@@ -2101,7 +2132,7 @@ namespace AlexPilotti.FTPS.Client
 
         private void AuthCmd(EAuthMechanism authMech)
         {
-            HandleCmd("AUTH " + authMech.ToString());
+            HandleCmd("AUTH " + authMech);
             SwitchCtrlToSSLMode();
         }
 
@@ -2113,12 +2144,12 @@ namespace AlexPilotti.FTPS.Client
 
         private void ProtCmd(EProtCode protCode)
         {
-            HandleCmd("PROT " + protCode.ToString());
+            HandleCmd("PROT " + protCode);
         }
 
         private void PbszCmd(uint maxSize)
         {
-            HandleCmd("PBSZ " + maxSize.ToString());
+            HandleCmd("PBSZ " + maxSize);
         }
 
         #endregion
@@ -2128,7 +2159,7 @@ namespace AlexPilotti.FTPS.Client
         private IList<string> FeatCmd()
         {
             FTPReply reply = HandleCmd("FEAT");
-            IList<string> features = new List<string>(reply.Message.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
+            IList<string> features = new List<string>(reply.Message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
             features.RemoveAt(0);
             features.RemoveAt(features.Count - 1);
 
@@ -2162,7 +2193,7 @@ namespace AlexPilotti.FTPS.Client
         /// <param name="ietfLanguageTag">RFC 1766 language tag</param>
         private void LangCmd(string ietfLanguageTag)
         {
-            HandleCmd("LANG" + (ietfLanguageTag != null ? (" " + ietfLanguageTag) : ""));
+            HandleCmd("LANG" + (ietfLanguageTag != null ? " " + ietfLanguageTag : ""));
         }
 
         #endregion

@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-
-namespace AlexPilotti.FTPS.Client
+﻿namespace AlexPilotti.FTPS.Client
 {
+    using System.IO;
+    using System.Text;
+
+    /// <summary>
+    ///     Path helper
+    /// </summary>
     public static class PathCheck
     {
         static char replacementChar = '_';

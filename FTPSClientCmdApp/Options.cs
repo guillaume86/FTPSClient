@@ -16,11 +16,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using AlexPilotti.FTPS.Common;
-using Plossum.CommandLine;
-
 namespace AlexPilotti.FTPS.Client.ConsoleApp
 {
+    using Common;
+    using Plossum.CommandLine;
+
     [CommandLineManager(ApplicationName = "Alex FTPS",
                         Copyright = "Copyright (C) Alessandro Pilotti",
                         EnabledOptionStyles = OptionStyles.ShortUnix, IsCaseSensitive = true)]
@@ -33,7 +33,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         [CommandLineOption(Name = "U", Aliases = "username", GroupId = "options",
                            Description = "Username used to perform the connection. If omitted an anonymous connection will be performed")]
-        public string userName = null;
+        public readonly string userName = null;
 
         [CommandLineOption(Name = "P", Aliases = "password", GroupId = "options",
                            Description = "Password to be used in case of non anonymous connections. If omitted it will be requested before connecting. Passing this information as a command line parameter is strongly discouraged for security reasons")]
@@ -42,27 +42,27 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         [CommandLineOption(Name = "h", Aliases = "hostname", GroupId = "options",
                            MinOccurs = 1,
                            Description = "Name or IP address of the remote host to connect to")]
-        public string hostName = null;
+        public readonly string hostName = null;
 
         [CommandLineOption(Name = "r", Aliases = "recursive", GroupId = "options",
                            Description = "Enable recursion to download or upload entire directory trees")]
-        public bool recursive = false;
+        public readonly bool recursive = false;
 
         [CommandLineOption(Name = "t", Aliases = "timeout", GroupId = "options",
                            Description = "TCP/IP connection timeout in seconds (default 120s)")]
-        public int timeout = 120;
+        public readonly int timeout = 120;
 
         [CommandLineOption(Name = "v", Aliases = "verbose", GroupId = "options",
                            Description = "Verbose output")]
-        public bool verbose = false;
+        public readonly bool verbose = false;
 
         [CommandLineOption(Name = "tm", Aliases = "transferMode", GroupId = "options",
                            Description = "Transfer mode / representation type. \"ASCII\" or \"Binary\" (default)")]
-        public ETransferMode transferMode = ETransferMode.Binary;
+        public readonly ETransferMode transferMode = ETransferMode.Binary;
 
         [CommandLineOption(Name = "noCopyrightInfo", GroupId = "options",
                            Description = "Avoids displaying the copyright information header")]
-        public bool noCopyrightInfo = false;
+        public readonly bool noCopyrightInfo = false;
 
         [CommandLineOption(Name = "port", GroupId = "options", MinValue = 1,
                            Description = "TCP/IP connection port, default is: 21 for standard FTP or explicit FTPS, 990 for implicit FTPS")]

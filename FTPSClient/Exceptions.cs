@@ -16,58 +16,61 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using System;
-
 namespace AlexPilotti.FTPS.Common
 {
+    using System;
+
     /// <summary>
     /// Base FTP exception class.
     /// </summary>
     public class FTPException : Exception
     {
+        /// <inheritdoc />
         protected FTPException()
         {
         }
 
-        public FTPException(string Message)
-            : base(Message)
+        /// <inheritdoc />
+        public FTPException(string message)
+            : base(message)
         {
         }
 
-        public FTPException(string Message, Exception innerException)
-            : base(Message, innerException)
+        /// <inheritdoc />
+        public FTPException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }
 
+    /// <inheritdoc />
     public class FTPReplyParseException : FTPException
     {
-        private string replyText;
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ReplyText { get; }
 
-        public string ReplyText
-        {
-            get { return replyText; }
-        }
-
+        /// <inheritdoc />
         public FTPReplyParseException(string replyText)
             : base("Invalid server reply: " + replyText)
         {
-            this.replyText = replyText;
+            ReplyText = replyText;
         }
     }
 
+    /// <inheritdoc />
     public class FTPProtocolException : FTPException
     {
-        FTPReply reply;
+        /// <summary>
+        /// 
+        /// </summary>
+        public FTPReply Reply { get; }
 
-        public FTPReply Reply
+        /// <inheritdoc />
+        public FTPProtocolException(FTPReply reply) : base("Invalid FTP protocol reply: " + reply)
         {
-            get { return reply; }
-        }
-
-        public FTPProtocolException(FTPReply reply) : base("Invalid FTP protocol reply: " + reply.ToString())
-        {
-            this.reply = reply;
+            Reply = reply;
         }
     }
 
@@ -76,8 +79,9 @@ namespace AlexPilotti.FTPS.Common
     /// </summary>
     public class FTPOperationCancelledException : FTPException
     {
-        public FTPOperationCancelledException(string Message)
-            : base(Message)
+        /// <inheritdoc />
+        public FTPOperationCancelledException(string message)
+            : base(message)
         {
         }
     }
@@ -87,27 +91,28 @@ namespace AlexPilotti.FTPS.Common
     /// </summary>
     public class FTPCommandException : FTPException
     {
-        int errorCode;
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ErrorCode { get; }
 
-        public int ErrorCode
-        {
-            get { return errorCode; }
-        }
-
-        public FTPCommandException(string Message)
-            : base(Message)
-        {
-        }
-
-        public FTPCommandException(string Message, Exception innerException)
-            : base(Message, innerException)
+        /// <inheritdoc />
+        public FTPCommandException(string message)
+            : base(message)
         {
         }
 
+        /// <inheritdoc />
+        public FTPCommandException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        /// <inheritdoc />
         public FTPCommandException(FTPReply reply)
             : base(reply.Message)
         {
-            this.errorCode = reply.Code;
+            ErrorCode = reply.Code;
         }
     }
 
@@ -116,13 +121,15 @@ namespace AlexPilotti.FTPS.Common
     /// </summary>
     public class FTPSslException : FTPException
     {
-        public FTPSslException(string Message)
-            : base(Message)
+        /// <inheritdoc />
+        public FTPSslException(string message)
+            : base(message)
         {
         }
 
-        public FTPSslException(string Message, Exception innerException)
-            : base(Message, innerException)
+        /// <inheritdoc />
+        public FTPSslException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }

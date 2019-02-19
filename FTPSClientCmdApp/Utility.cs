@@ -16,13 +16,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using System;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
 namespace AlexPilotti.FTPS.Client.ConsoleApp
 {
+    using System;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+
     class Utility
     {
         public static string FormatTimeSpan(TimeSpan ts)
@@ -68,7 +67,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             }
             while (res != "Y" && res != "N");
 
-            return (res == "Y");
+            return res == "Y";
         }
 
         /// <summary>

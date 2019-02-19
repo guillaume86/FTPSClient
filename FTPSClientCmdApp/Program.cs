@@ -16,19 +16,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using AlexPilotti.FTPS.Common;
-using Plossum.CommandLine;
-using System.Reflection;
-
 namespace AlexPilotti.FTPS.Client.ConsoleApp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Net;
+    using System.Net.Security;
+    using System.Reflection;
+    using System.Security.Cryptography.X509Certificates;
+    using Common;
+    using Plossum;
+    using Plossum.CommandLine;
+
     enum EInvalidSslCertificateHandling { Refuse, Accept, Prompt }
     enum EX509CertificateExportFormats { Cert, SerializedCert, Pkcs12 }
 
@@ -41,14 +42,14 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         private static int consoleFormatWidth = 80;
         // Needed to show progress during a file transfer
-        private static int lastCharPos = 0;
+        private static int lastCharPos;
 
         // Set during multiple file transfers
-        private static int filesTrasferredCount = 0;
+        private static int filesTrasferredCount;
 
         private static Stopwatch watch = new Stopwatch();
 
-        private static StreamWriter swLog = null;
+        private static StreamWriter swLog;
 
         static int Main(string[] args)
         {
@@ -171,8 +172,8 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             if (options.logFileName != null)
             {
                 swLog = new StreamWriter(options.logFileName);
-                client.LogCommand += new LogCommandEventHandler(client_LogCommand);
-                client.LogServerReply += new LogServerReplyEventHandler(client_LogServerReply);
+                client.LogCommand += client_LogCommand;
+                client.LogServerReply += client_LogServerReply;
             }
         }
 
@@ -193,14 +194,14 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         {
             if (options.logFileTimeStamps)
                 swLog.WriteLine(DateTime.Now.ToString(logDateTimeFormat));
-            swLog.WriteLine(string.Format("{0} {1}", args.ServerReply.Code, args.ServerReply.Message));
+            swLog.WriteLine("{0} {1}", args.ServerReply.Code, args.ServerReply.Message);
         }
 
         private static void DoCustomCommand(FTPSClient client)
         {
             FTPReply reply = client.SendCustomCommand(commandArguments[0]);
 
-            Console.WriteLine("Server reply: " + reply.ToString());
+            Console.WriteLine("Server reply: " + reply);
         }
 
         private static void DoFeatures(FTPSClient client)
@@ -351,8 +352,8 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
             Console.WriteLine("Errors:");
             foreach (string message in additionalErrors)
-                Console.WriteLine(Plossum.StringFormatter.FormatInColumns(indentWidth, 1, new Plossum.ColumnInfo(1, "*"),
-                                  new Plossum.ColumnInfo(consoleFormatWidth - 1 - indentWidth - 1, message)));            
+                Console.WriteLine(StringFormatter.FormatInColumns(indentWidth, 1, new ColumnInfo(1, "*"),
+                                  new ColumnInfo(consoleFormatWidth - 1 - indentWidth - 1, message)));            
         }
 
         private static void PerformAdditionalCommandLineValidation(CommandLineParser parser, IList<string> additionalErrors)
@@ -428,7 +429,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             }
 
             string remoteFileName;
-            client.PutUniqueFile(localPathName, out remoteFileName, new FileTransferCallback(TransferCallback));            
+            client.PutUniqueFile(localPathName, out remoteFileName, TransferCallback);            
 
             Console.WriteLine("Unique file uploaded. File name: \"" + remoteFileName + "\"");
         }
@@ -437,7 +438,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         {
             string localPathName = commandArguments[0];
             string remotePathName = GetRemotePathName(localPathName);
-            client.AppendFile(localPathName, remotePathName, new FileTransferCallback(TransferCallback));            
+            client.AppendFile(localPathName, remotePathName, TransferCallback);            
         }
 
         private static void DoMakeDir(FTPSClient client)
@@ -471,7 +472,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             client.Connect(options.hostName, port,
                            credential,
                            options.sslRequestSupportMode,
-                           new RemoteCertificateValidationCallback(ValidateTestServerCertificate),
+                           ValidateTestServerCertificate,
                            x509ClientCert, 
                            options.sslMinKeyExchangeAlgStrength, 
                            options.sslMinCipherAlgStrength,
@@ -504,8 +505,8 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.WriteLine(client.WelcomeMessage);
                 Console.WriteLine();
 
-                Console.WriteLine("Text encoding: " + client.TextEncoding.ToString());
-                Console.WriteLine("Transfer mode: " + client.TransferMode.ToString());
+                Console.WriteLine("Text encoding: " + client.TextEncoding);
+                Console.WriteLine("Transfer mode: " + client.TransferMode);
             }
         }
 
@@ -550,7 +551,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 SslInfo sslInfo = client.SslInfo;
                 if (sslInfo != null)
                 {
-                    Console.WriteLine("SSL/TLS Info: " + sslInfo.ToString());
+                    Console.WriteLine("SSL/TLS Info: " + sslInfo);
                 }
             }
         }
@@ -586,7 +587,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 localPathName = Path.Combine(localDirName, remoteFileName);
             }
 
-            client.GetFile(remotePathName, localPathName, new FileTransferCallback(TransferCallback));
+            client.GetFile(remotePathName, localPathName, TransferCallback);
         }
 
         private static void DoWildCardGet(FTPSClient client, string remotePathPattern)
@@ -602,7 +603,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             else
                 localDirName = Directory.GetCurrentDirectory();
 
-            client.GetFiles(remoteDirName, localDirName, remoteFilePattern, EPatternStyle.Wildcard, options.recursive, new FileTransferCallback(TransferCallback));
+            client.GetFiles(remoteDirName, localDirName, remoteFilePattern, EPatternStyle.Wildcard, options.recursive, TransferCallback);
 
             Console.WriteLine();
             if (filesTrasferredCount > 0)
@@ -637,7 +638,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             if (commandArguments.Count > 1)
                 remoteDirName = NormalizeRemotePath(commandArguments[1]);
 
-            client.PutFiles(localDirName, remoteDirName, localFilePattern, EPatternStyle.Wildcard, options.recursive, new FileTransferCallback(TransferCallback));
+            client.PutFiles(localDirName, remoteDirName, localFilePattern, EPatternStyle.Wildcard, options.recursive, TransferCallback);
 
             Console.WriteLine();
             if (filesTrasferredCount > 0)
@@ -649,7 +650,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         private static void DoSingleFilePut(FTPSClient client, string localPathName)
         {
             string remotePathName = GetRemotePathName(localPathName);
-            client.PutFile(localPathName, remotePathName, new FileTransferCallback(TransferCallback));
+            client.PutFile(localPathName, remotePathName, TransferCallback);
         }
 
         private static string GetRemotePathName(string localPathName)

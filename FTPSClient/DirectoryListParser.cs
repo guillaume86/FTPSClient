@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text.RegularExpressions;
-
-namespace AlexPilotti.FTPS.Common
+﻿namespace AlexPilotti.FTPS.Common
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Text.RegularExpressions;
+
     /// <summary>
     /// Based on Adarsh's code: http://blogs.msdn.com/adarshk/archive/2004/09/15/230177.aspx
     /// </summary>
@@ -52,19 +52,19 @@ namespace AlexPilotti.FTPS.Common
 
         private static DirectoryListItem ParseDirectoryListItemFromWindowsStyleRecord(string record)
         {
-            ///Assuming the record style as
-            /// 02-03-04  07:46PM       <DIR>          Append
+            //Assuming the record style as
+            // 02-03-04  07:46PM       <DIR>          Append
             DirectoryListItem f = new DirectoryListItem();
             string processstr = record.Trim();
             string dateStr = processstr.Substring(0, 8);
-            processstr = (processstr.Substring(8, processstr.Length - 8)).Trim();
+            processstr = processstr.Substring(8, processstr.Length - 8).Trim();
             string timeStr = processstr.Substring(0, 7);
-            processstr = (processstr.Substring(7, processstr.Length - 7)).Trim();
+            processstr = processstr.Substring(7, processstr.Length - 7).Trim();
             f.CreationTime = DateTime.Parse(dateStr + " " + timeStr, CultureInfo.GetCultureInfo("en-US"));
             if (processstr.Substring(0, 5) == "<DIR>")
             {
                 f.IsDirectory = true;
-                processstr = (processstr.Substring(5, processstr.Length - 5)).Trim();
+                processstr = processstr.Substring(5, processstr.Length - 5).Trim();
             }
             else
             {
@@ -88,8 +88,9 @@ namespace AlexPilotti.FTPS.Common
                 {
                     return EDirectoryListingStyle.UnixStyle;
                 }
-                else if (s.Length > 8
-                 && Regex.IsMatch(s.Substring(0, 8), "[0-9][0-9]-[0-9][0-9]-[0-9][0-9]"))
+
+                if (s.Length > 8
+                    && Regex.IsMatch(s.Substring(0, 8), "[0-9][0-9]-[0-9][0-9]-[0-9][0-9]"))
                 {
                     return EDirectoryListingStyle.WindowsStyle;
                 }
@@ -99,8 +100,8 @@ namespace AlexPilotti.FTPS.Common
 
         private static DirectoryListItem ParseDirectoryListItemFromUnixStyleRecord(string record)
         {
-            ///Assuming record style as
-            /// dr-xr-xr-x   1 owner    group               0 Nov 25  2002 bussys
+            //Assuming record style as
+            // dr-xr-xr-x   1 owner    group               0 Nov 25  2002 bussys
 
             // Mac OS X - tnftpd returns the total on the first line
             if (record.ToLower().StartsWith("total "))
@@ -109,10 +110,10 @@ namespace AlexPilotti.FTPS.Common
             DirectoryListItem f = new DirectoryListItem();
             string processstr = record.Trim();
             f.Flags = processstr.Substring(0, 9);
-            f.IsDirectory = (f.Flags[0] == 'd');
+            f.IsDirectory = f.Flags[0] == 'd';
             // Note: there is no way to determine here if the symlink refers to a dir or a file
-            f.IsSymLink = (f.Flags[0] == 'l');                
-            processstr = (processstr.Substring(11)).Trim();
+            f.IsSymLink = f.Flags[0] == 'l';                
+            processstr = processstr.Substring(11).Trim();
             CutSubstringFromStringWithTrim(ref processstr, " ", 0);   //skip one part
             f.Owner = CutSubstringFromStringWithTrim(ref processstr, " ", 0);
             f.Group = CutSubstringFromStringWithTrim(ref processstr, " ", 0);
@@ -145,7 +146,7 @@ namespace AlexPilotti.FTPS.Common
         {
             int pos1 = s.IndexOf(str, startIndex);
             string retString = s.Substring(0, pos1);
-            s = (s.Substring(pos1 + str.Length)).Trim();
+            s = s.Substring(pos1 + str.Length).Trim();
             return retString;
         }
     }
