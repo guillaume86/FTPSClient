@@ -16,97 +16,105 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-using System.IO;
-
 namespace AlexPilotti.FTPS.Common
 {
+    using System.IO;
+
+    /// <inheritdoc />
     internal delegate void FTPStreamCallback();
 
     /// <summary>
-    /// Incapsulates a Stream used during FTP get and put commands.
+    /// Encapsulates a Stream used during FTP get and put commands.
     /// </summary>
     public class FTPStream : Stream
     {
-        public enum EAllowedOperation { Read = 1, Write = 2 }
+        /// <summary>
+        /// 
+        /// </summary>
+        public enum EAllowedOperation
+        {
 
-        Stream innerStream;
-        FTPStreamCallback streamClosedCallback;
-        EAllowedOperation allowedOp;
+            /// <summary>
+            /// 
+            /// </summary>
+            Read = 1,
+            /// <summary>
+            /// 
+            /// </summary>
+            Write = 2
+        }
+
+        private readonly Stream _innerStream;
+        private readonly FTPStreamCallback _streamClosedCallback;
+        private readonly EAllowedOperation _allowedOp;
 
         internal FTPStream(Stream innerStream, EAllowedOperation allowedOp, FTPStreamCallback streamClosedCallback)
         {
-            this.innerStream = innerStream;
-            this.streamClosedCallback = streamClosedCallback;
-            this.allowedOp = allowedOp;
+            _innerStream = innerStream;
+            _streamClosedCallback = streamClosedCallback;
+            _allowedOp = allowedOp;
         }
 
-        public override bool CanRead
-        {
-            get { return innerStream.CanRead && (allowedOp & EAllowedOperation.Read) == EAllowedOperation.Read; }
-        }
+        /// <inheritdoc />
+        public override bool CanRead => _innerStream.CanRead && (_allowedOp & EAllowedOperation.Read) == EAllowedOperation.Read;
 
-        public override bool CanSeek
-        {
-            get { return innerStream.CanSeek; }
-        }
+        /// <inheritdoc />
+        public override bool CanSeek => _innerStream.CanSeek;
 
-        public override bool CanWrite
-        {
-            get { return innerStream.CanWrite && (allowedOp & EAllowedOperation.Write) == EAllowedOperation.Write; }
-        }
+        /// <inheritdoc />
+        public override bool CanWrite => _innerStream.CanWrite && (_allowedOp & EAllowedOperation.Write) == EAllowedOperation.Write;
 
+        /// <inheritdoc />
         public override void Flush()
         {
-            innerStream.Flush();
+            _innerStream.Flush();
         }
 
-        public override long Length
-        {
-            get { return innerStream.Length; }
-        }
+        /// <inheritdoc />
+        public override long Length => _innerStream.Length;
 
+        /// <inheritdoc />
         public override long Position
         {
-            get
-            {
-                return innerStream.Position;
-            }
-            set
-            {
-                innerStream.Position = value;
-            }
+            get => _innerStream.Position;
+            set => _innerStream.Position = value;
         }
 
+        /// <inheritdoc />
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (!CanRead)
                 throw new FTPException("Operation not allowed");
 
-            return innerStream.Read(buffer, offset, count);
+            return _innerStream.Read(buffer, offset, count);
         }
 
+        /// <inheritdoc />
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return innerStream.Seek(offset, origin);
+            return _innerStream.Seek(offset, origin);
         }
 
+        /// <inheritdoc />
         public override void SetLength(long value)
         {
-            innerStream.SetLength(value);
+            _innerStream.SetLength(value);
         }
 
+        /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (!CanWrite)
                 throw new FTPException("Operation not allowed");
 
-            innerStream.Write(buffer, offset, count);
+            _innerStream.Write(buffer, offset, count);
         }
 
+        /// <inheritdoc />
         public override void Close()
         {
             base.Close();
-            streamClosedCallback();
+            _streamClosedCallback();
         }
     }
 }

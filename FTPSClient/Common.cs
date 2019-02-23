@@ -1,118 +1,113 @@
-﻿/*
- *  Copyright 2008 Alessandro Pilotti
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation; either version 2.1 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
- */
-
-using System;
-using System.Security.Authentication;
-
-namespace AlexPilotti.FTPS.Common
+﻿namespace  AlexPilotti.FTPS.Client
 {
-    public enum ETransferMode { ASCII, Binary }
+    using System;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Security.Authentication;
 
-    public enum ETextEncoding { ASCII, UTF8 }
+    /// <summary>
+    ///     The transfer mode
+    /// </summary>
+    public enum ETransferMode
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        ASCII,
+        /// <summary>
+        /// 
+        /// </summary>
+        Binary
+    }
 
+    /// <summary>
+    ///     The text encoding
+    /// </summary>
+    public enum ETextEncoding
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        ASCII,
+        /// <summary>
+        /// 
+        /// </summary>
+        // ReSharper disable InconsistentNaming
+        UTF8
+        // ReSharper restore InconsistentNaming
+    }
+
+    /// <summary>
+    ///     An FTP command acknowledgement or response
+    /// </summary>
     public class FTPReply
     {
-        private int code;
-        private string message;
+        /// <summary>
+        ///     The response code
+        /// </summary>
+        public int Code { get; set; }
 
-        public int Code
-        {
-            get { return code; }
-            set { code = value; }
-        }
+        /// <summary>
+        ///     The response message
+        /// </summary>
+        public string Message { get; set; }
 
-        public string Message
-        {
-            get { return message; }
-            set { message = value; }
-        }
-
+        /// <inheritdoc />
         public override string ToString()
         {
             return string.Format("{0} {1}", Code, Message);
         }
     }
 
+    /// <summary>
+    ///     A single record from a dir or ls command
+    /// </summary>
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
     public class DirectoryListItem
     {
-        private string flags;
-        private string owner;
-        private string group;
-        private bool isDirectory;
-        private bool isSymLink;
-        private string name;
-        private ulong size;
-        private DateTime creationTime;
-        private string symLinkTargetPath;
+        /// <summary>
+        ///     The size in bytes
+        /// </summary>
+        public ulong Size { get; set; }
 
-        public ulong Size
-        {
-            get { return size; }
-            set { size = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public string SymLinkTargetPath { get; set; }
 
-        public string SymLinkTargetPath
-        {
-            get { return symLinkTargetPath; }
-            set { symLinkTargetPath = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public string Flags { get; set; }
 
-        public string Flags
-        {
-            get { return flags; }
-            set { flags = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public string Owner { get; set; }
 
-        public string Owner
-        {
-            get { return owner; }
-            set { owner = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public string Group { get; set; }
 
-        public string Group
-        {
-            get { return group; }
-            set { group = value; }
-        }
+        /// <summary>
+        ///     True if the item is a directory
+        /// </summary>
+        public bool IsDirectory { get; set; }
 
-        public bool IsDirectory
-        {
-            get { return isDirectory; }
-            set { isDirectory = value; }
-        }
+        /// <summary>
+        ///     True if the item is a symbolic link
+        /// </summary>
+        public bool IsSymLink { get; set; }
 
-        public bool IsSymLink
-        {
-            get { return isSymLink; }
-            set { isSymLink = value; }
-        }
+        /// <summary>
+        ///     The item name
+        /// </summary>
+        public string Name { get; set; }
 
-        public string Name
-        {
-            get { return name; }
-            set { name = value; }
-        }
-
-        public DateTime CreationTime
-        {
-            get { return creationTime; }
-            set { creationTime = value; }
-        }
+        /// <summary>
+        ///     The time the item was created
+        /// </summary>
+        public DateTime CreationTime { get; set; }
     }
 
     /// <summary>
@@ -120,87 +115,79 @@ namespace AlexPilotti.FTPS.Common
     /// </summary>
     public class SslInfo
     {
-        SslProtocols sslProtocol;
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public SslProtocols SslProtocol { get; set; }
 
-        CipherAlgorithmType cipherAlgorithm;
-        int cipherStrength;
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public CipherAlgorithmType CipherAlgorithm { get; set; }
 
-        HashAlgorithmType hashAlgorithm;
-        int hashStrength;
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public int CipherStrength { get; set; }
 
-        ExchangeAlgorithmType keyExchangeAlgorithm;
-        int keyExchangeStrength;
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public HashAlgorithmType HashAlgorithm { get; set; }
 
-        public SslProtocols SslProtocol
-        {
-            get { return sslProtocol; }
-            set { sslProtocol = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public int HashStrength { get; set; }
 
-        public CipherAlgorithmType CipherAlgorithm
-        {
-            get { return cipherAlgorithm; }
-            set { cipherAlgorithm = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public ExchangeAlgorithmType KeyExchangeAlgorithm { get; set; }
 
-        public int CipherStrength
-        {
-            get { return cipherStrength; }
-            set { cipherStrength = value; }
-        }
+        /// <summary>
+        ///     ?
+        /// </summary>
+        public int KeyExchangeStrength { get; set; }
 
-        public HashAlgorithmType HashAlgorithm
-        {
-            get { return hashAlgorithm; }
-            set { hashAlgorithm = value; }
-        }
 
-        public int HashStrength
-        {
-            get { return hashStrength; }
-            set { hashStrength = value; }
-        }
-
-        public ExchangeAlgorithmType KeyExchangeAlgorithm
-        {
-            get { return keyExchangeAlgorithm; }
-            set { keyExchangeAlgorithm = value; }
-        }
-
-        public int KeyExchangeStrength
-        {
-            get { return keyExchangeStrength; }
-            set { keyExchangeStrength = value; }
-        }
-
+        /// <inheritdoc />
         public override string ToString()
         {
-            return SslProtocol.ToString() + ", " +
-                   CipherAlgorithm.ToString() + " (" + cipherStrength.ToString() + " bit), " +
-                   KeyExchangeAlgorithm.ToString() + " (" + keyExchangeStrength.ToString() + " bit), " +
-                   HashAlgorithm.ToString() + " (" + hashStrength.ToString() + " bit)";
+            return SslProtocol + ", " +
+                   CipherAlgorithm + " (" + CipherStrength + " bit), " +
+                   KeyExchangeAlgorithm + " (" + KeyExchangeStrength + " bit), " +
+                   HashAlgorithm + " (" + HashStrength + " bit)";
         }
     }
 
+    /// <inheritdoc />
     public class LogCommandEventArgs : EventArgs
     {
+        /// <inheritdoc />
         public LogCommandEventArgs(string commandText)
-            : base()
         {
-            this.CommandText = commandText;
+            CommandText = commandText;
         }
 
-        public string CommandText { get; private set; }
+        /// <summary>
+        ///     The text of the command
+        /// </summary>
+        public string CommandText { get; }
     }
 
+    /// <inheritdoc />
     public class LogServerReplyEventArgs : EventArgs
     {
+        /// <inheritdoc />
         public LogServerReplyEventArgs(FTPReply serverReply)
-            : base()
         {
-            this.ServerReply = serverReply;
+            ServerReply = serverReply;
         }
 
-        public FTPReply ServerReply { get; private set; }
+        /// <summary>
+        ///     The server reply
+        /// </summary>
+        public FTPReply ServerReply { get; }
     }
 }

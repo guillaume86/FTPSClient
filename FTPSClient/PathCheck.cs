@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-
-namespace AlexPilotti.FTPS.Client
+﻿namespace AlexPilotti.FTPS.Client
 {
+    using System.IO;
+    using System.Text;
+
+    /// <summary>
+    ///     Path helper
+    /// </summary>
     public static class PathCheck
     {
         static char replacementChar = '_';
@@ -21,8 +22,8 @@ namespace AlexPilotti.FTPS.Client
 
         private static string ReplaceAllChars(string str, char[] oldChars, char newChar)
         {
-            StringBuilder sb = new StringBuilder(str);
-            foreach (char c in oldChars)
+            var sb = new StringBuilder(str);
+            foreach (var c in oldChars)
                 sb.Replace(c, newChar);
             return sb.ToString();
         }
