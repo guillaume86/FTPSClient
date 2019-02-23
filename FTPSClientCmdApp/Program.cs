@@ -31,45 +31,45 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
     using Plossum.CommandLine;
 
     enum EInvalidSslCertificateHandling { Refuse, Accept, Prompt }
-    enum EX509CertificateExportFormats { Cert, SerializedCert, Pkcs12 }
+    enum Ex509CertificateExportFormats { Cert, SerializedCert, Pkcs12 }
 
-    class Program
+    internal static class Program
     {
-        private static Options options = new Options();
-        private static IList<string> commandArguments;
-        const string programName = "ftps";
-        const string logDateTimeFormat = "yyyy-MM-ddTHH:mm:ss.fffffffK";
+        private static readonly Options _options = new Options();
+        private static IList<string> _commandArguments;
+        const string PROGRAM_NAME = "ftps";
+        const string LOG_DATE_TIME_FORMAT = "yyyy-MM-ddTHH:mm:ss.fffffffK";
 
-        private static int consoleFormatWidth = 80;
+        private static int _consoleFormatWidth = 80;
         // Needed to show progress during a file transfer
-        private static int lastCharPos;
+        private static int _lastCharPos;
 
         // Set during multiple file transfers
-        private static int filesTrasferredCount;
+        private static int _filesTransferredCount;
 
-        private static Stopwatch watch = new Stopwatch();
+        private static readonly Stopwatch _watch = new Stopwatch();
 
-        private static StreamWriter swLog;
+        private static StreamWriter _swLog;
 
-        static int Main(string[] args)
+        static int Main()
         {
-            int retVal = -1;
+            var retVal = -1;
 
             SetConsoleFormatWidth();
 
             try
             {
-                CommandLineParser parser = new CommandLineParser(options);
+                var parser = new CommandLineParser(_options);
                 parser.AddAssignmentCharacter(':', OptionStyles.All);
 
                 IList<string> additionalErrors;
                 ParseArguments(parser, out additionalErrors);
 
-                if (options.helpCmd || parser.HasErrors || additionalErrors.Count > 0)
-                    ShowHelpInfoAndErrors(parser, additionalErrors, !options.helpCmd);
+                if (_options.helpCmd || parser.HasErrors || additionalErrors.Count > 0)
+                    ShowHelpInfoAndErrors(parser, additionalErrors, !_options.helpCmd);
                 else
                 {
-                    if (!options.noCopyrightInfo)
+                    if (!_options.noCopyrightInfo)
                         ShowHeader();
 
                     DoCommands();
@@ -82,7 +82,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.Error.WriteLine();
                 Console.Error.WriteLine("ERROR: " + ex.Message);
 
-                if (options.verbose && ex.InnerException != null)
+                if (_options.verbose && ex.InnerException != null)
                     Console.Error.WriteLine("Inner exception: " + ex.InnerException);
             }
 
@@ -93,11 +93,11 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         {
             try
             {
-                consoleFormatWidth = Console.WindowWidth - 1;
+                _consoleFormatWidth = Console.WindowWidth - 1;
             }
             catch (Exception)
             {
-                consoleFormatWidth = 80;
+                _consoleFormatWidth = 80;
             } 
         }
 
@@ -105,52 +105,52 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         {
             try
             {
-                using (FTPSClient client = new FTPSClient())
+                using (var client = new FtpsClient())
                 {
                     InitLogFile(client);
 
                     DoConnect(client);
 
-                    if (options.listDirCmd)
+                    if (_options.listDirCmd)
                         DoList(client);
 
-                    if (options.getCmd)
+                    if (_options.getCmd)
                         DoGet(client);
 
-                    if (options.putCmd)
+                    if (_options.putCmd)
                         DoPut(client);
 
-                    if (options.deleteFileCmd)
+                    if (_options.deleteFileCmd)
                         DoDeleteFile(client);
 
-                    if (options.renameFileCmd)
+                    if (_options.renameFileCmd)
                         DoRenameFile(client);
 
-                    if (options.makeDirCmd)
+                    if (_options.makeDirCmd)
                         DoMakeDir(client);
 
-                    if (options.removeDirCmd)
+                    if (_options.removeDirCmd)
                         DoRemoveDir(client);
 
-                    if (options.putUniqueFileCmd)
+                    if (_options.putUniqueFileCmd)
                         DoPutUniqueFile(client);
 
-                    if (options.putAppendFileCmd)
+                    if (_options.putAppendFileCmd)
                         DoAppendFile(client);
 
-                    if (options.sysCmd)
+                    if (_options.sysCmd)
                         DoSys(client);
 
-                    if (options.expCertCmd)
+                    if (_options.expCertCmd)
                         DoExportSslServerCert(client);
 
-                    if (options.featuresCmd)
+                    if (_options.featuresCmd)
                         DoFeatures(client);
 
-                    if (options.customCmd)
+                    if (_options.customCmd)
                         DoCustomCommand(client);
 
-                    if (options.verbose)
+                    if (_options.verbose)
                     {
                         Console.WriteLine();
                         Console.WriteLine("Command completed");
@@ -159,19 +159,19 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             }
             finally
             {
-                if (swLog != null)
+                if (_swLog != null)
                 {
-                    swLog.Close();
-                    swLog = null;
+                    _swLog.Close();
+                    _swLog = null;
                 }
             }
         }
 
-        private static void InitLogFile(FTPSClient client)
+        private static void InitLogFile(FtpsClient client)
         {
-            if (options.logFileName != null)
+            if (_options.logFileName != null)
             {
-                swLog = new StreamWriter(options.logFileName);
+                _swLog = new StreamWriter(_options.logFileName);
                 client.LogCommand += client_LogCommand;
                 client.LogServerReply += client_LogServerReply;
             }
@@ -179,34 +179,34 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         static void client_LogCommand(object sender, LogCommandEventArgs args)
         {
-            if (options.logFileTimeStamps)
-                swLog.WriteLine(DateTime.Now.ToString(logDateTimeFormat));
+            if (_options.logFileTimeStamps)
+                _swLog.WriteLine(DateTime.Now.ToString(LOG_DATE_TIME_FORMAT));
 
             // Hide password
-            string cmdText = args.CommandText;
+            var cmdText = args.CommandText;
             if (cmdText.StartsWith("PASS "))
                 cmdText = "PASS ********";
 
-            swLog.WriteLine(cmdText);
+            _swLog.WriteLine(cmdText);
         }
 
         static void client_LogServerReply(object sender, LogServerReplyEventArgs args)
         {
-            if (options.logFileTimeStamps)
-                swLog.WriteLine(DateTime.Now.ToString(logDateTimeFormat));
-            swLog.WriteLine("{0} {1}", args.ServerReply.Code, args.ServerReply.Message);
+            if (_options.logFileTimeStamps)
+                _swLog.WriteLine(DateTime.Now.ToString(LOG_DATE_TIME_FORMAT));
+            _swLog.WriteLine("{0} {1}", args.ServerReply.Code, args.ServerReply.Message);
         }
 
-        private static void DoCustomCommand(FTPSClient client)
+        private static void DoCustomCommand(FtpsClient client)
         {
-            FTPReply reply = client.SendCustomCommand(commandArguments[0]);
+            var reply = client.SendCustomCommand(_commandArguments[0]);
 
             Console.WriteLine("Server reply: " + reply);
         }
 
-        private static void DoFeatures(FTPSClient client)
+        private static void DoFeatures(FtpsClient client)
         {
-            IList<string> features = client.GetFeatures();
+            var features = client.GetFeatures();
 
             Console.WriteLine();
 
@@ -217,37 +217,37 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.WriteLine("Features:");
                 Console.WriteLine();
 
-                foreach (string feature in features)
+                foreach (var feature in features)
                     Console.WriteLine(feature);                
             }            
         }
 
-        private static void DoExportSslServerCert(FTPSClient client)
+        private static void DoExportSslServerCert(FtpsClient client)
         {
             if (client.SslSupportCurrentMode == ESSLSupportMode.ClearText)
                 throw new Exception("The FTP connection is not encrypted");
 
-            X509Certificate cert = client.RemoteCertificate;
+            var cert = client.RemoteCertificate;
             if (cert == null)
                 throw new Exception("No remote SSL/TLS X.509 certificate available");
 
-            X509ContentType exportX509ContentType = X509ContentType.Cert;
-            switch (options.sslCertExportFormat)
+            var exportX509ContentType = X509ContentType.Cert;
+            switch (_options.sslCertExportFormat)
             {
-                case EX509CertificateExportFormats.Cert:
+                case Ex509CertificateExportFormats.Cert:
                     exportX509ContentType = X509ContentType.Cert;
                     break;
-                case EX509CertificateExportFormats.SerializedCert:
+                case Ex509CertificateExportFormats.SerializedCert:
                     exportX509ContentType = X509ContentType.SerializedCert;
                     break;
-                case EX509CertificateExportFormats.Pkcs12:
+                case Ex509CertificateExportFormats.Pkcs12:
                     exportX509ContentType = X509ContentType.Pkcs12;
                     break;
             }
 
-            byte[] exportedCert = cert.Export(exportX509ContentType);
+            var exportedCert = cert.Export(exportX509ContentType);
 
-            using (Stream s = File.Create(commandArguments[0]))
+            using (Stream s = File.Create(_commandArguments[0]))
                 s.Write(exportedCert, 0, exportedCert.Length);
         }
 
@@ -256,14 +256,14 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             ShowHeader();
 
             Console.WriteLine();
-            Console.WriteLine("Usage: " + programName + " [options] <command> [command specific arguments]");
+            Console.WriteLine("Usage: " + PROGRAM_NAME + " [options] <command> [command specific arguments]");
             Console.WriteLine();
             Console.WriteLine();
 
             if (showErrors)
             {
                 if (parser.HasErrors)
-                    Console.WriteLine(parser.UsageInfo.GetErrorsAsString(consoleFormatWidth));
+                    Console.WriteLine(parser.UsageInfo.GetErrorsAsString(_consoleFormatWidth));
 
                 if (additionalErrors.Count > 0)
                     WriteAdditionalErrors(additionalErrors);
@@ -271,7 +271,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.WriteLine();
             }
             
-            Console.WriteLine(parser.UsageInfo.GetOptionsAsString(consoleFormatWidth));
+            Console.WriteLine(parser.UsageInfo.GetOptionsAsString(_consoleFormatWidth));
 
             ShowUsageSamples();
         }
@@ -284,29 +284,29 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             Console.WriteLine("* Show the directory contents of a remote directory using anonymous");
             Console.WriteLine("  authentication on standard FTP (without SSL/TLS):");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -ssl ClearText -l /pub");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -ssl ClearText -l /pub");
             Console.WriteLine();
             Console.WriteLine("* Connect to the server using SSL/TLS during authentication or");
             Console.WriteLine("  clear text mode (standard FTP) if FTPS is not supported:");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -U alex -l /pub");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -U alex -l /pub");
             Console.WriteLine();
             Console.WriteLine("* Download a remote file using control and data channel SSL/TLS encryption:");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -U alex -ssl All -g /remote/path/somefile.txt /local/path/");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -U alex -ssl All -g /remote/path/somefile.txt /local/path/");
             Console.WriteLine();
             Console.WriteLine("* Upload a local file with a control channel encrypted");
             Console.WriteLine("  during authentication only:");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -U alex -ssl CredentialsRequired -p /local/path/somefile.txt /remote/path/");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -U alex -ssl CredentialsRequired -p /local/path/somefile.txt /remote/path/");
             Console.WriteLine();
             Console.WriteLine("* Recursively download a whole directory tree:");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -r -g /remote/path/* \local\path\");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -r -g /remote/path/* \local\path\");
             Console.WriteLine();
             Console.WriteLine("* Implicit FTPS on port 21:");
             Console.WriteLine();
-            Console.WriteLine(programName + @" -h ftp.yourserver.com -port 21 -ssl Implicit -U alex -l");
+            Console.WriteLine(PROGRAM_NAME + @" -h ftp.yourserver.com -port 21 -ssl Implicit -U alex -l");
             Console.WriteLine();
             Console.WriteLine("ADDITIONAL INFO AND HELP: http://www.codeplex.com/ftps");
         }
@@ -325,8 +325,8 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         private static string GetAssemblyVersion()
         {
-            Version version = Assembly.GetExecutingAssembly().GetName().Version;
-            return string.Format("{0}.{1}.{2}", version.Major, version.Minor, version.Build);
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
         private static void ParseArguments(CommandLineParser parser, out IList<string> additionalErrors)
@@ -336,95 +336,95 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             additionalErrors = new List<string>();
 
             // Get the arguments left off by the parser
-            commandArguments = new List<string>();
+            _commandArguments = new List<string>();
 
             if (!parser.HasErrors)
             {
                 PerformAdditionalCommandLineValidation(parser, additionalErrors);
                 // The remaining arguments are the valid command parameters
-                (commandArguments as List<string>).AddRange(parser.RemainingArguments);
+                ((List<string>) _commandArguments).AddRange(parser.RemainingArguments);
             }
         }
 
         private static void WriteAdditionalErrors(IList<string> additionalErrors)
         {
-            int indentWidth = 3;
+            var indentWidth = 3;
 
             Console.WriteLine("Errors:");
-            foreach (string message in additionalErrors)
+            foreach (var message in additionalErrors)
                 Console.WriteLine(StringFormatter.FormatInColumns(indentWidth, 1, new ColumnInfo(1, "*"),
-                                  new ColumnInfo(consoleFormatWidth - 1 - indentWidth - 1, message)));            
+                                  new ColumnInfo(_consoleFormatWidth - 1 - indentWidth - 1, message)));            
         }
 
         private static void PerformAdditionalCommandLineValidation(CommandLineParser parser, IList<string> additionalErrors)
         {
-            string messageTemplate = "Wrong arguments number supplied for the \"{0}\" command.\r\n" + 
-                                     "Usage: " + programName + " [options] {1}";
+            var messageTemplate = "Wrong arguments number supplied for the \"{0}\" command.\r\n" + 
+                                     "Usage: " + PROGRAM_NAME + " [options] {1}";
 
-            if (options.listDirCmd && parser.RemainingArguments.Count > 1)
+            if (_options.listDirCmd && parser.RemainingArguments.Count > 1)
                 additionalErrors.Add(string.Format(messageTemplate, "list", "[remoteDir]"));           
 
-            if(options.getCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
+            if(_options.getCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
                 additionalErrors.Add(string.Format(messageTemplate, "get", "<remoteFile|remoteFilePattern> [localDir|localFile]"));
 
-            if (options.putCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
+            if (_options.putCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
                 additionalErrors.Add(string.Format(messageTemplate, "put", "<localFile|localFilePattern> [remoteDir|remoteFile]"));
 
-            if (options.deleteFileCmd && parser.RemainingArguments.Count != 1)
+            if (_options.deleteFileCmd && parser.RemainingArguments.Count != 1)
                 additionalErrors.Add(string.Format(messageTemplate, "delete", "<remoteFile>"));
 
-            if (options.renameFileCmd && parser.RemainingArguments.Count != 2)
+            if (_options.renameFileCmd && parser.RemainingArguments.Count != 2)
                 additionalErrors.Add(string.Format(messageTemplate, "rename", "<fromRemoteFile> <toRemoteFile>"));
 
-            if (options.makeDirCmd && parser.RemainingArguments.Count != 1)
+            if (_options.makeDirCmd && parser.RemainingArguments.Count != 1)
                 additionalErrors.Add(string.Format(messageTemplate, "mkdir", "<remoteDir>"));
 
-            if (options.removeDirCmd && parser.RemainingArguments.Count != 1)
+            if (_options.removeDirCmd && parser.RemainingArguments.Count != 1)
                 additionalErrors.Add(string.Format(messageTemplate, "rmdir", "<remoteDir>"));
 
-            if (options.putUniqueFileCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
+            if (_options.putUniqueFileCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
                 additionalErrors.Add(string.Format(messageTemplate, "putUnique", "<localFile> [remoteDir]"));
 
-            if (options.putAppendFileCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
+            if (_options.putAppendFileCmd && (parser.RemainingArguments.Count == 0 || parser.RemainingArguments.Count > 2))
                 additionalErrors.Add(string.Format(messageTemplate, "putAppend", "<localFile> [remoteDir|remoteFile]"));
 
-            if (options.sysCmd && parser.RemainingArguments.Count > 0)
+            if (_options.sysCmd && parser.RemainingArguments.Count > 0)
                 additionalErrors.Add(string.Format(messageTemplate, "sys", ""));
 
-            if (options.expCertCmd && parser.RemainingArguments.Count != 1)
+            if (_options.expCertCmd && parser.RemainingArguments.Count != 1)
                 additionalErrors.Add(string.Format(messageTemplate, "exportSslServerCert", "<certFileName>"));
 
-            if (options.featuresCmd && parser.RemainingArguments.Count > 0)
+            if (_options.featuresCmd && parser.RemainingArguments.Count > 0)
                 additionalErrors.Add(string.Format(messageTemplate, "features", ""));
 
-            if (options.customCmd && parser.RemainingArguments.Count != 1)
+            if (_options.customCmd && parser.RemainingArguments.Count != 1)
                 additionalErrors.Add(string.Format(messageTemplate, "custom", "<customFTPCommand>"));
         }
 
-        private static void DoSys(FTPSClient client)
+        private static void DoSys(FtpsClient client)
         {
-            string systemInfo = client.GetSystem();
+            var systemInfo = client.GetSystem();
             Console.WriteLine("Remote system: \"" + systemInfo + "\"");
         }
 
-        private static void DoDeleteFile(FTPSClient client)
+        private static void DoDeleteFile(FtpsClient client)
         {
-            client.DeleteFile(NormalizeRemotePath(commandArguments[0]));
+            client.DeleteFile(NormalizeRemotePath(_commandArguments[0]));
         }
 
-        private static void DoRenameFile(FTPSClient client)
+        private static void DoRenameFile(FtpsClient client)
         {
-            client.RenameFile(NormalizeRemotePath(commandArguments[0]), 
-                              NormalizeRemotePath(commandArguments[1]));
+            client.RenameFile(NormalizeRemotePath(_commandArguments[0]), 
+                              NormalizeRemotePath(_commandArguments[1]));
         }
 
-        private static void DoPutUniqueFile(FTPSClient client)
+        private static void DoPutUniqueFile(FtpsClient client)
         {
-            string localPathName = commandArguments[0];
+            var localPathName = _commandArguments[0];
 
-            if(commandArguments.Count > 1)
+            if(_commandArguments.Count > 1)
             {
-                string remoteDirName = NormalizeRemotePath(commandArguments[1]);
+                var remoteDirName = NormalizeRemotePath(_commandArguments[1]);
                 client.SetCurrentDirectory(remoteDirName);
             }
 
@@ -434,65 +434,65 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             Console.WriteLine("Unique file uploaded. File name: \"" + remoteFileName + "\"");
         }
 
-        private static void DoAppendFile(FTPSClient client)
+        private static void DoAppendFile(FtpsClient client)
         {
-            string localPathName = commandArguments[0];
-            string remotePathName = GetRemotePathName(localPathName);
+            var localPathName = _commandArguments[0];
+            var remotePathName = GetRemotePathName(localPathName);
             client.AppendFile(localPathName, remotePathName, TransferCallback);            
         }
 
-        private static void DoMakeDir(FTPSClient client)
+        private static void DoMakeDir(FtpsClient client)
         {
-            client.MakeDir(NormalizeRemotePath(commandArguments[0]));
+            client.MakeDir(NormalizeRemotePath(_commandArguments[0]));
         }
 
-        private static void DoRemoveDir(FTPSClient client)
+        private static void DoRemoveDir(FtpsClient client)
         {
-            client.RemoveDir(NormalizeRemotePath(commandArguments[0]));
+            client.RemoveDir(NormalizeRemotePath(_commandArguments[0]));
         }
 
-        private static void DoConnect(FTPSClient client)
+        private static void DoConnect(FtpsClient client)
         {
             WriteCredentialsEncryptionWarning();
 
             CheckPassword();
 
-            int port = options.port;
+            var port = _options.port;
             if (port == 0)
-                port = (options.sslRequestSupportMode & ESSLSupportMode.Implicit) == ESSLSupportMode.Implicit ? 990 : 21;
+                port = (_options.SslRequestSupportMode & ESSLSupportMode.Implicit) == ESSLSupportMode.Implicit ? 990 : 21;
 
             NetworkCredential credential = null;
-            if (options.userName != null && options.userName.Length > 0)
-                credential = new NetworkCredential(options.userName, options.password);
+            if (!string.IsNullOrEmpty(_options.UserName))
+                credential = new NetworkCredential(_options.UserName, _options.password);
 
             X509Certificate x509ClientCert = null;
-            if (options.sslClientCertPath != null)
-                x509ClientCert = X509Certificate.CreateFromCertFile(options.sslClientCertPath);
+            if (_options.sslClientCertPath != null)
+                x509ClientCert = X509Certificate.CreateFromCertFile(_options.sslClientCertPath);
 
-            client.Connect(options.hostName, port,
+            client.Connect(_options.hostName, port,
                            credential,
-                           options.sslRequestSupportMode,
+                           _options.SslRequestSupportMode,
                            ValidateTestServerCertificate,
                            x509ClientCert, 
-                           options.sslMinKeyExchangeAlgStrength, 
-                           options.sslMinCipherAlgStrength,
-                           options.sslMinHashAlgStrength,
-                           options.timeout * 1000,
-                           options.useCtrlEndPointAddressForData,
-                           options.dataConnectionMode);
+                           _options.sslMinKeyExchangeAlgStrength, 
+                           _options.sslMinCipherAlgStrength,
+                           _options.sslMinHashAlgStrength,
+                           _options.timeout * 1000,
+                           _options.useCtrlEndPointAddressForData,
+                           _options.dataConnectionMode);
 
             // client.Connect already sets binary by default
-            if (options.transferMode != ETransferMode.Binary)
-                client.SetTransferMode(options.transferMode);
+            if (_options.transferMode != ETransferMode.Binary)
+                client.SetTransferMode(_options.transferMode);
 
             WriteConnectionInfo(client);
 
             WriteSslStatus(client);
         }
 
-        private static void WriteConnectionInfo(FTPSClient client)
+        private static void WriteConnectionInfo(FtpsClient client)
         {
-            if (options.verbose)
+            if (_options.verbose)
             {
                 Console.WriteLine();
                 Console.WriteLine("Banner message:");
@@ -512,21 +512,18 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         private static void WriteCredentialsEncryptionWarning()
         {
-            if (options.userName != null && (options.sslRequestSupportMode & ESSLSupportMode.CredentialsRequired) != ESSLSupportMode.CredentialsRequired)
+            if (_options.UserName != null && (_options.SslRequestSupportMode & ESSLSupportMode.CredentialsRequired) != ESSLSupportMode.CredentialsRequired)
             {
                 Console.WriteLine();
 
-                if ((options.sslRequestSupportMode & ESSLSupportMode.CredentialsRequested) != ESSLSupportMode.CredentialsRequested)
-                    Console.WriteLine("WARNING: Credentials will be sent in clear text");
-                else
-                    Console.WriteLine("WARNING: Credentials might be sent in clear text");
+                Console.WriteLine((_options.SslRequestSupportMode & ESSLSupportMode.CredentialsRequested) != ESSLSupportMode.CredentialsRequested ? "WARNING: Credentials will be sent in clear text" : "WARNING: Credentials might be sent in clear text");
                 Console.WriteLine("Please see the \"ssl\" option for details");
             }
         }
 
-        private static void WriteSslStatus(FTPSClient client)
+        private static void WriteSslStatus(FtpsClient client)
         {
-            if (options.verbose)
+            if (_options.verbose)
             {
                 string sslSupportDesc = null;
 
@@ -548,7 +545,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.WriteLine();
                 Console.WriteLine("SSL/TLS support: " + sslSupportDesc);
 
-                SslInfo sslInfo = client.SslInfo;
+                var sslInfo = client.SslInfo;
                 if (sslInfo != null)
                 {
                     Console.WriteLine("SSL/TLS Info: " + sslInfo);
@@ -556,9 +553,9 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             }
         }
 
-        private static void DoGet(FTPSClient client)
+        private static void DoGet(FtpsClient client)
         {
-            string remotePathPattern = commandArguments[0];
+            var remotePathPattern = _commandArguments[0];
             
             if (IsWildCardPath(remotePathPattern))
                 DoWildCardGet(client, remotePathPattern);
@@ -566,16 +563,16 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 DoSingleFileGet(client, remotePathPattern);
         }
 
-        private static void DoSingleFileGet(FTPSClient client, string remotePathName)
+        private static void DoSingleFileGet(FtpsClient client, string remotePathName)
         {
             string localPathName = null;
             string localDirName = null;
-            if (commandArguments.Count > 1)
+            if (_commandArguments.Count > 1)
             {
-                if (Directory.Exists(commandArguments[1]))
-                    localDirName = commandArguments[1];
+                if (Directory.Exists(_commandArguments[1]))
+                    localDirName = _commandArguments[1];
                 else
-                    localPathName = commandArguments[1];
+                    localPathName = _commandArguments[1];
 
             }
             else
@@ -583,31 +580,28 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
             if (localPathName == null)
             {                
-                string remoteFileName = Path.GetFileName(remotePathName);
-                localPathName = Path.Combine(localDirName, remoteFileName);
+                var remoteFileName = Path.GetFileName(remotePathName);
+                localPathName = Path.Combine(localDirName ?? throw new InvalidOperationException($"{nameof(localDirName)} cannot be null"), 
+                    remoteFileName ?? throw new InvalidOperationException($"{nameof(remoteFileName)} cannot be null"));
             }
 
             client.GetFile(remotePathName, localPathName, TransferCallback);
         }
 
-        private static void DoWildCardGet(FTPSClient client, string remotePathPattern)
+        private static void DoWildCardGet(FtpsClient client, string remotePathPattern)
         {
-            string remoteDirName = NormalizeRemotePath(Path.GetDirectoryName(remotePathPattern));
-            string remoteFilePattern = Path.GetFileName(remotePathPattern);
+            var remoteDirName = NormalizeRemotePath(Path.GetDirectoryName(remotePathPattern));
+            var remoteFilePattern = Path.GetFileName(remotePathPattern);
 
-            filesTrasferredCount = 0;
+            _filesTransferredCount = 0;
 
-            string localDirName;
-            if (commandArguments.Count > 1)
-                localDirName = commandArguments[1];
-            else
-                localDirName = Directory.GetCurrentDirectory();
+            var localDirName = _commandArguments.Count > 1 ? _commandArguments[1] : Directory.GetCurrentDirectory();
 
-            client.GetFiles(remoteDirName, localDirName, remoteFilePattern, EPatternStyle.Wildcard, options.recursive, TransferCallback);
+            client.GetFiles(remoteDirName, localDirName, remoteFilePattern, EPatternStyle.Wildcard, _options.recursive, TransferCallback);
 
             Console.WriteLine();
-            if (filesTrasferredCount > 0)
-                Console.WriteLine("Downloaded files: {0}", filesTrasferredCount);
+            if (_filesTransferredCount > 0)
+                Console.WriteLine("Downloaded files: {0}", _filesTransferredCount);
             else
                 Console.Error.WriteLine("WARNING: No files downloaded");            
         }
@@ -617,9 +611,9 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             return pathName.Contains("*") || pathName.Contains("?");
         }
 
-        private static void DoPut(FTPSClient client)
+        private static void DoPut(FtpsClient client)
         {
-            string localPathPattern = commandArguments[0];            
+            var localPathPattern = _commandArguments[0];            
 
             if (IsWildCardPath(localPathPattern))
                 DoWildCardPut(client, localPathPattern);
@@ -627,39 +621,39 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 DoSingleFilePut(client, localPathPattern);            
         }
 
-        private static void DoWildCardPut(FTPSClient client, string localPathPattern)
+        private static void DoWildCardPut(FtpsClient client, string localPathPattern)
         {
-            string localDirName = Path.GetDirectoryName(localPathPattern);
-            string localFilePattern = Path.GetFileName(localPathPattern);
+            var localDirName = Path.GetDirectoryName(localPathPattern);
+            var localFilePattern = Path.GetFileName(localPathPattern);
 
-            filesTrasferredCount = 0;
+            _filesTransferredCount = 0;
 
             string remoteDirName = null;
-            if (commandArguments.Count > 1)
-                remoteDirName = NormalizeRemotePath(commandArguments[1]);
+            if (_commandArguments.Count > 1)
+                remoteDirName = NormalizeRemotePath(_commandArguments[1]);
 
-            client.PutFiles(localDirName, remoteDirName, localFilePattern, EPatternStyle.Wildcard, options.recursive, TransferCallback);
+            client.PutFiles(localDirName, remoteDirName, localFilePattern, EPatternStyle.Wildcard, _options.recursive, TransferCallback);
 
             Console.WriteLine();
-            if (filesTrasferredCount > 0)
-                Console.WriteLine("Uploaded files: {0}", filesTrasferredCount);
+            if (_filesTransferredCount > 0)
+                Console.WriteLine("Uploaded files: {0}", _filesTransferredCount);
             else
                 Console.Error.WriteLine("WARNING: No files uploaded");            
         }
 
-        private static void DoSingleFilePut(FTPSClient client, string localPathName)
+        private static void DoSingleFilePut(FtpsClient client, string localPathName)
         {
-            string remotePathName = GetRemotePathName(localPathName);
+            var remotePathName = GetRemotePathName(localPathName);
             client.PutFile(localPathName, remotePathName, TransferCallback);
         }
 
         private static string GetRemotePathName(string localPathName)
         {
-            string remotePathName = null;
-            string localFileName = Path.GetFileName(localPathName);
-            if (commandArguments.Count > 1)
+            string remotePathName;
+            var localFileName = Path.GetFileName(localPathName);
+            if (_commandArguments.Count > 1)
             {
-                string str = NormalizeRemotePath(commandArguments[1]);
+                var str = NormalizeRemotePath(_commandArguments[1]);
 
                 if (str.EndsWith("/"))
                     remotePathName = str + localFileName;
@@ -681,26 +675,22 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             return remotePath != null ? remotePath.Replace("\\", "/") : null;
         }
 
-        private static void DoList(FTPSClient client)
+        private static void DoList(FtpsClient client)
         {
-            string remoteDirName = null;
-            if (commandArguments.Count > 0)
-                remoteDirName = NormalizeRemotePath(commandArguments[0]);
-            else
-                remoteDirName = client.GetCurrentDirectory();
+            var remoteDirName = _commandArguments.Count > 0 ? NormalizeRemotePath(_commandArguments[0]) : client.GetCurrentDirectory();
 
             Console.WriteLine();
             Console.WriteLine("Remote directory: " + remoteDirName);
 
             // Get the dirList before the WriteLine in order to avoid writing an empty newline in case of exceptions
-            string dirList = client.GetDirectoryListUnparsed(remoteDirName);
+            var dirList = client.GetDirectoryListUnparsed(remoteDirName);
             Console.WriteLine();
             Console.WriteLine(dirList);
         }
 
         private static bool ValidateTestServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            bool certOk = false;
+            var certOk = false;
 
             if (sslPolicyErrors == SslPolicyErrors.None)
                 certOk = true;
@@ -717,11 +707,11 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 if ((sslPolicyErrors & SslPolicyErrors.RemoteCertificateNotAvailable) > 0)
                     Console.Error.WriteLine("WARNING: SSL/TLS remote certificate not available");                
 
-                if (options.sslInvalidServerCertHandling == EInvalidSslCertificateHandling.Accept)
+                if (_options.sslInvalidServerCertHandling == EInvalidSslCertificateHandling.Accept)
                     certOk = true;
             }
 
-            if (!certOk || options.verbose)
+            if (!certOk || _options.verbose)
             {
                 Console.WriteLine();
                 Console.WriteLine("SSL/TLS Server certificate details:");
@@ -729,7 +719,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 Console.WriteLine(Utility.GetCertificateInfo(certificate));
             }
 
-            if (!certOk && options.sslInvalidServerCertHandling == EInvalidSslCertificateHandling.Prompt)
+            if (!certOk && _options.sslInvalidServerCertHandling == EInvalidSslCertificateHandling.Prompt)
             {                
                 certOk = Utility.ConsoleConfirm("Accept invalid server certificate? (Y/N)");                
             }
@@ -739,16 +729,16 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         private static void CheckPassword()
         {
-            if (options.userName != null && options.password == null)
+            if (_options.UserName != null && _options.password == null)
             {
                 Console.WriteLine();
                 Console.Write("Password: ");
-                options.password = Utility.ReadConsolePassword();
+                _options.password = Utility.ReadConsolePassword();
                 Console.WriteLine();
             }
         }
 
-        private static void TransferCallback(FTPSClient sender, ETransferActions action, string localObjectName, string remoteObjectName, ulong fileTransmittedBytes, ulong? fileTransferSize, ref bool cancel)
+        private static void TransferCallback(FtpsClient sender, ETransferActions action, string localObjectName, string remoteObjectName, ulong fileTransmittedBytes, ulong? fileTransferSize, ref bool cancel)
         {
             switch (action)
             {
@@ -761,14 +751,14 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                     OnFileTransferStatus(action, localObjectName, remoteObjectName, fileTransmittedBytes, fileTransferSize);
                     break;
                 case ETransferActions.RemoteDirectoryCreated:
-                    if (options.verbose)
+                    if (_options.verbose)
                     {
                         Console.WriteLine();
                         Console.WriteLine("Remote directory created: " + remoteObjectName);                        
                     }
                     break;
                 case ETransferActions.LocalDirectoryCreated:
-                    if (options.verbose)
+                    if (_options.verbose)
                     {
                         Console.WriteLine();
                         Console.WriteLine("Local directory created: " + localObjectName);                        
@@ -783,10 +773,10 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             {
                 // Download / upload start
 
-                watch.Reset();
-                watch.Start();
+                _watch.Reset();
+                _watch.Start();
 
-                lastCharPos = 0;
+                _lastCharPos = 0;
 
                 Console.WriteLine();
 
@@ -806,7 +796,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                 {
                     Console.WriteLine(fileTransferSize.Value.ToString("N0") + " Byte");
                     Console.WriteLine();
-                    Console.WriteLine("0%".PadRight(consoleFormatWidth - 4, ' ') + "100%");
+                    Console.WriteLine("0%".PadRight(_consoleFormatWidth - 4, ' ') + "100%");
                 }
                 else
                     Console.WriteLine("Unknown");
@@ -815,21 +805,21 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             {
                 // Download / upload progress
 
-                int charPos = (int)(fileTransmittedBytes * (ulong)consoleFormatWidth / fileTransferSize);
+                var charPos = (int)(fileTransmittedBytes * (ulong)_consoleFormatWidth / fileTransferSize);
 
-                if (charPos - lastCharPos > 0)
+                if (charPos - _lastCharPos > 0)
                 {
-                    Console.Write(new String('.', charPos - lastCharPos));
-                    lastCharPos = charPos;
+                    Console.Write(new String('.', charPos - _lastCharPos));
+                    _lastCharPos = charPos;
                 }
             }
         }
 
         private static void OnFileTransferCompleted(ulong fileTransmittedBytes, ulong? fileTransferSize)
         {
-            watch.Stop();
+            _watch.Stop();
 
-            filesTrasferredCount++;
+            _filesTransferredCount++;
 
             if (fileTransferSize != null)
             {
@@ -843,10 +833,10 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
             }
 
             double kBs = 0;
-            if (watch.ElapsedMilliseconds > 0)
-                kBs = fileTransmittedBytes / 1.024D / watch.ElapsedMilliseconds;
+            if (_watch.ElapsedMilliseconds > 0)
+                kBs = fileTransmittedBytes / 1.024D / _watch.ElapsedMilliseconds;
 
-            Console.WriteLine("Elapsed time: " + Utility.FormatTimeSpan(watch.Elapsed) + " - Average rate: " + kBs.ToString("N02") + " KB/s");
+            Console.WriteLine("Elapsed time: " + Utility.FormatTimeSpan(_watch.Elapsed) + " - Average rate: " + kBs.ToString("N02") + " KB/s");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace AlexPilotti.FTPS.Common
+﻿namespace  AlexPilotti.FTPS.Client
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
@@ -31,7 +31,9 @@
         /// <summary>
         /// 
         /// </summary>
+        // ReSharper disable InconsistentNaming
         UTF8
+        // ReSharper restore InconsistentNaming
     }
 
     /// <summary>

@@ -18,6 +18,7 @@
 
 namespace AlexPilotti.FTPS.Client.ConsoleApp
 {
+    using System.Diagnostics.CodeAnalysis;
     using Common;
     using Plossum.CommandLine;
 
@@ -27,13 +28,15 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
     [CommandLineOptionGroup("commands", Name = "Commands", Require = OptionGroupRequirement.ExactlyOne)]
     [CommandLineOptionGroup("options", Name = "Options")]
     [CommandLineOptionGroup("ssloptions", Name = "SSL/TLS Options")]
+    [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Global")]
+    [SuppressMessage("ReSharper", "ConvertToConstant.Global")]
     class Options
     {
 #region Options
 
-        [CommandLineOption(Name = "U", Aliases = "username", GroupId = "options",
-                           Description = "Username used to perform the connection. If omitted an anonymous connection will be performed")]
-        public readonly string userName = null;
+[CommandLineOption(Name = "U", Aliases = "username", GroupId = "options",
+            Description = "Username used to perform the connection. If omitted an anonymous connection will be performed")]
+        public string UserName { get; } = null;
 
         [CommandLineOption(Name = "P", Aliases = "password", GroupId = "options",
                            Description = "Password to be used in case of non anonymous connections. If omitted it will be requested before connecting. Passing this information as a command line parameter is strongly discouraged for security reasons")]
@@ -89,21 +92,21 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
 #region SSL Options
 
-        [CommandLineOption(Name = "ssl", Aliases = "tls", GroupId = "ssloptions",
-                           Description = "SSL/TLS support. Possible values are: \r\n\r\n" +
-                                         "- ClearText (Standard FTP, no SSL/TLS support)\r\n" +
-                                         "- CredentialsRequested\r\n" +
-                                         "- CredentialsRequired\r\n" +
-                                         "- ControlChannelRequested\r\n" +
-                                         "- ControlChannelRequired\r\n" +
-                                         "- DataChannelRequested (Default)\r\n" +
-                                         "- DataChannelRequired\r\n" +
-                                         "- ControlAndDataChannelsRequested\r\n" +
-                                         "- ControlAndDataChannelsRequired\r\n" +                                         
-                                         "- All (alias for \"ControlAndDataChannelsRequired\")\r\n" + 
-                                         "- Implicit\r\n" +
-                                         "\r\n")]
-        public ESSLSupportMode sslRequestSupportMode = ESSLSupportMode.DataChannelRequested;
+[CommandLineOption(Name = "ssl", Aliases = "tls", GroupId = "ssloptions",
+            Description = "SSL/TLS support. Possible values are: \r\n\r\n" +
+                          "- ClearText (Standard FTP, no SSL/TLS support)\r\n" +
+                          "- CredentialsRequested\r\n" +
+                          "- CredentialsRequired\r\n" +
+                          "- ControlChannelRequested\r\n" +
+                          "- ControlChannelRequired\r\n" +
+                          "- DataChannelRequested (Default)\r\n" +
+                          "- DataChannelRequired\r\n" +
+                          "- ControlAndDataChannelsRequested\r\n" +
+                          "- ControlAndDataChannelsRequired\r\n" +
+                          "- All (alias for \"ControlAndDataChannelsRequired\")\r\n" +
+                          "- Implicit\r\n" +
+                          "\r\n")]
+        public ESSLSupportMode SslRequestSupportMode { get; } = ESSLSupportMode.DataChannelRequested;
 
         [CommandLineOption(Name = "sslClientCertPath", GroupId = "ssloptions",
                            Description = "X.509 client certificate file path")]
@@ -131,7 +134,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         [CommandLineOption(Name = "sslX509ExportFormat", GroupId = "ssloptions",
                            Description = "X509 certificate export format. Not all formats are available on all platforms. "+ 
                                          "Supported values are: Cert (default), Pkcs12, SerializedCert")]
-        public EX509CertificateExportFormats sslCertExportFormat = EX509CertificateExportFormats.Cert;
+        public Ex509CertificateExportFormats sslCertExportFormat = Ex509CertificateExportFormats.Cert;
 
 #endregion
 

@@ -19,6 +19,7 @@
 namespace AlexPilotti.FTPS.Common
 {
     using System;
+    using Client;
 
     /// <summary>
     /// Base FTP exception class.

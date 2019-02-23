@@ -31,7 +31,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
 
         public static string GetCertificateInfo(X509Certificate certificate)
         {
-            StringBuilder certInfo = new StringBuilder();
+            var certInfo = new StringBuilder();
 
             //Note: certificate.ToString() returns just the class name in Mono 2.0
 
@@ -76,8 +76,8 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
         /// <returns></returns>
         public static string ReadConsolePassword()
         {
-            string password = "";
-            ConsoleKeyInfo info = Console.ReadKey(true);
+            var password = "";
+            var info = Console.ReadKey(true);
             while (info.Key != ConsoleKey.Enter)
             {
                 if (info.Key != ConsoleKey.Backspace)
@@ -95,7 +95,7 @@ namespace AlexPilotti.FTPS.Client.ConsoleApp
                     info = Console.ReadKey(true);
                 }
             }
-            for (int i = 0; i < password.Length; i++)
+            for (var i = 0; i < password.Length; i++)
                 Console.Write("*");
             return password;
         }

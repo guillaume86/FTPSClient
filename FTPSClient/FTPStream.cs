@@ -44,40 +44,40 @@ namespace AlexPilotti.FTPS.Common
             Write = 2
         }
 
-        Stream innerStream;
-        FTPStreamCallback streamClosedCallback;
-        EAllowedOperation allowedOp;
+        private readonly Stream _innerStream;
+        private readonly FTPStreamCallback _streamClosedCallback;
+        private readonly EAllowedOperation _allowedOp;
 
         internal FTPStream(Stream innerStream, EAllowedOperation allowedOp, FTPStreamCallback streamClosedCallback)
         {
-            this.innerStream = innerStream;
-            this.streamClosedCallback = streamClosedCallback;
-            this.allowedOp = allowedOp;
+            _innerStream = innerStream;
+            _streamClosedCallback = streamClosedCallback;
+            _allowedOp = allowedOp;
         }
 
         /// <inheritdoc />
-        public override bool CanRead => innerStream.CanRead && (allowedOp & EAllowedOperation.Read) == EAllowedOperation.Read;
+        public override bool CanRead => _innerStream.CanRead && (_allowedOp & EAllowedOperation.Read) == EAllowedOperation.Read;
 
         /// <inheritdoc />
-        public override bool CanSeek => innerStream.CanSeek;
+        public override bool CanSeek => _innerStream.CanSeek;
 
         /// <inheritdoc />
-        public override bool CanWrite => innerStream.CanWrite && (allowedOp & EAllowedOperation.Write) == EAllowedOperation.Write;
+        public override bool CanWrite => _innerStream.CanWrite && (_allowedOp & EAllowedOperation.Write) == EAllowedOperation.Write;
 
         /// <inheritdoc />
         public override void Flush()
         {
-            innerStream.Flush();
+            _innerStream.Flush();
         }
 
         /// <inheritdoc />
-        public override long Length => innerStream.Length;
+        public override long Length => _innerStream.Length;
 
         /// <inheritdoc />
         public override long Position
         {
-            get => innerStream.Position;
-            set => innerStream.Position = value;
+            get => _innerStream.Position;
+            set => _innerStream.Position = value;
         }
 
         /// <inheritdoc />
@@ -86,19 +86,19 @@ namespace AlexPilotti.FTPS.Common
             if (!CanRead)
                 throw new FTPException("Operation not allowed");
 
-            return innerStream.Read(buffer, offset, count);
+            return _innerStream.Read(buffer, offset, count);
         }
 
         /// <inheritdoc />
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return innerStream.Seek(offset, origin);
+            return _innerStream.Seek(offset, origin);
         }
 
         /// <inheritdoc />
         public override void SetLength(long value)
         {
-            innerStream.SetLength(value);
+            _innerStream.SetLength(value);
         }
 
         /// <inheritdoc />
@@ -107,14 +107,14 @@ namespace AlexPilotti.FTPS.Common
             if (!CanWrite)
                 throw new FTPException("Operation not allowed");
 
-            innerStream.Write(buffer, offset, count);
+            _innerStream.Write(buffer, offset, count);
         }
 
         /// <inheritdoc />
         public override void Close()
         {
             base.Close();
-            streamClosedCallback();
+            _streamClosedCallback();
         }
     }
 }
