@@ -3,7 +3,7 @@ Extension of Alex's FTPS client, forked from [luck02](https://github.com/luck02/
 
 Release/Packaging build status: [![Build status](https://ci.appveyor.com/api/projects/status/f2v7bjngjqbhxfey?svg=true)](https://ci.appveyor.com/project/StingyJack/ftpsclient)
 
-This package is available at ...(coming soon)
+This package is available at https://www.nuget.org/packages/AlexFTPS.vNext/
 
 Original project: https://ftps.codeplex.com/
 
