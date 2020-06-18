@@ -1,12 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.329
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSClientCmdApp", "FTPSClientCmdApp\FTPSClientCmdApp.csproj", "{1AFDF825-AFF2-4A46-80B6-3AF5F81941F6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSClient", "FTPSClient\FTPSClient.csproj", "{8271707D-0C08-460D-A332-6FDB8D0BB6D1}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{1275F362-2F28-4F6D-8F73-DBAEAA4F9F8D}"
 	ProjectSection(SolutionItems) = preProject
 		Lib\C5.dll = Lib\C5.dll
@@ -20,20 +16,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FTPSClient", "FTPSClient\FTPSClient.csproj", "{B88011D7-3C15-4DD8-91C4-BC9E1EE7E9F7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FTPSClientCmdApp", "FTPSClientCmdApp\FTPSClientCmdApp.csproj", "{795AEE59-E0B6-4996-815D-06F933481223}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1AFDF825-AFF2-4A46-80B6-3AF5F81941F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1AFDF825-AFF2-4A46-80B6-3AF5F81941F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1AFDF825-AFF2-4A46-80B6-3AF5F81941F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1AFDF825-AFF2-4A46-80B6-3AF5F81941F6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8271707D-0C08-460D-A332-6FDB8D0BB6D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8271707D-0C08-460D-A332-6FDB8D0BB6D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8271707D-0C08-460D-A332-6FDB8D0BB6D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8271707D-0C08-460D-A332-6FDB8D0BB6D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B88011D7-3C15-4DD8-91C4-BC9E1EE7E9F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B88011D7-3C15-4DD8-91C4-BC9E1EE7E9F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B88011D7-3C15-4DD8-91C4-BC9E1EE7E9F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B88011D7-3C15-4DD8-91C4-BC9E1EE7E9F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{795AEE59-E0B6-4996-815D-06F933481223}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{795AEE59-E0B6-4996-815D-06F933481223}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{795AEE59-E0B6-4996-815D-06F933481223}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{795AEE59-E0B6-4996-815D-06F933481223}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
